@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "Grasp",
+	"Description": "Gameplay Interaction System",
+	"Category": "Gameplay",
+	"CreatedBy": "Jared Taylor (Vaei)",
+	"CreatedByURL": "https://vaei.github.io/",
+	"DocsURL": "https://github.com/Vaei/Grasp/wiki",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Grasp",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
