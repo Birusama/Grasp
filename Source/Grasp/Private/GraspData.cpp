@@ -1,0 +1,45 @@
+﻿// Copyright (c) Jared Taylor
+
+
+#include "GraspData.h"
+
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GraspData)
+
+
+#if WITH_EDITOR
+void UGraspData::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.GetPropertyName().IsEqual(GET_MEMBER_NAME_CHECKED(ThisClass, MaxGraspDistance)) ||
+		PropertyChangedEvent.GetPropertyName().IsEqual(GET_MEMBER_NAME_CHECKED(ThisClass, MaxHighlightDistance)))
+	{
+		if (FMath::IsNearlyZero(MaxHighlightDistance))
+		{
+			MaxHighlightDistance = 0.f;
+		}
+		else
+		{
+			// Clamp the highlight distance to be greater or equal than the grasp distance
+			MaxHighlightDistance = FMath::Max(MaxHighlightDistance, MaxGraspDistance);
+		}
+	}
+}
+
+EDataValidationResult UGraspData::IsDataValid(class FDataValidationContext& Context) const
+{
+	// MaxHighlightDistance should be greater than MaxGraspDistance, unless MaxHighlightDistance is 0
+	if (MaxHighlightDistance > 0.f && MaxHighlightDistance < MaxGraspDistance)
+	{
+		Context.AddError(FText::Format(NSLOCTEXT("GraspData", "InvalidGraspData", "MaxHighlightDistance ({0}) should either be 0 (disabled) or should be greater than MaxGraspDistance ({1})"),
+			FText::AsNumber(MaxHighlightDistance), FText::AsNumber(MaxGraspDistance)));
+		return EDataValidationResult::Invalid;
+	}
+	
+	return Super::IsDataValid(Context);
+}
+#endif

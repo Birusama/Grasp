@@ -13,6 +13,9 @@ public class Grasp : ModuleRules
 			{
 				"Core",
 				"GameplayTags",
+				"GameplayTasks",
+				"GameplayAbilities",
+				"TargetingSystem",
 			}
 			);
 			

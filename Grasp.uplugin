@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0.0",
 	"FriendlyName": "Grasp",
-	"Description": "Gameplay Interaction System",
+	"Description": "Interaction - robust, data-driven, with optional network prediction.",
 	"Category": "Gameplay",
 	"CreatedBy": "Jared Taylor (Vaei)",
 	"CreatedByURL": "https://vaei.github.io/",
@@ -17,7 +17,13 @@
 		{
 			"Name": "Grasp",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PreDefault"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "TargetingSystem",
+			"Enabled": true
 		}
 	]
 }

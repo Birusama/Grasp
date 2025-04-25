@@ -1,0 +1,451 @@
+﻿// Copyright (c) Jared Taylor
+
+
+#include "GraspComponent.h"
+
+#include "AbilitySystemComponent.h"
+#include "GraspData.h"
+#include "TargetingSystem/TargetingSubsystem.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
+#include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "Misc/UObjectToken.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GraspComponent)
+
+#define LOCTEXT_NAMESPACE "Grasp"
+
+UGraspComponent::UGraspComponent(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	// No ticking or replication, ever
+	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
+	
+	SetIsReplicatedByDefault(false);
+}
+
+void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemComponent, TSubclassOf<UGameplayAbility> ScanAbility)
+{
+	if (IsValid(GetOwner()) && GetOwner()->HasAuthority())
+	{
+		// Cache the ability system component
+		ASC = InAbilitySystemComponent;
+
+		// Validate the ASC
+		if (!ensure(ASC.IsValid()))
+		{
+			if (IsInGameThread())
+			{
+				FMessageLog("PIE").Error()
+					->AddToken(FUObjectToken::Create(this))
+					->AddToken(FTextToken::Create(LOCTEXT("InvalidASC", "Invalid Ability System Component")))
+					->AddToken(FTextToken::Create(LOCTEXT("InitializeGrasp", "InitializeGrasp")));
+			}
+			return;
+		}
+
+		// Cache the owning controller
+		Controller = Cast<AController>(GetOwner());
+
+		// Pre-grant common interact abilities
+		for (const TSubclassOf<UGameplayAbility>& Ability : CommonInteractAbilities)
+		{
+			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
+				INDEX_NONE, this));
+			
+			if (ensure(Handle.IsValid()))
+			{
+				FGraspAbilityData& Data = AbilityData.FindOrAdd(Ability);
+				Data.Handle = Handle;
+				Data.Ability = Ability;
+				Data.bPersistent = true;  // Don't allow this to be removed
+
+				// Extension point
+				PostGiveGraspAbility(Ability, Data);
+			}
+		}
+		
+		// End the scan ability if it is already active
+		if (ScanAbilityHandle.IsValid())
+		{
+			ASC->ClearAbility(ScanAbilityHandle);
+			ScanAbilityHandle = FGameplayAbilitySpecHandle();
+		}
+
+		// Grant the scan ability if provided
+		if (ScanAbility)
+		{
+			ScanAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(ScanAbility, 1, INDEX_NONE, this));
+		}
+
+		// Cache the preset update mode to detect changed
+		bLastUpdateTargetingPresetsOnPawnChange = bUpdateTargetingPresetsOnPawnChange;
+
+		// Get the targeting presets
+		if (ScanAbilityHandle.IsValid())
+		{
+			CurrentTargetingPresets = GetTargetingPresets();
+		}
+
+		// Bind the pawn changed event if required
+		UpdatePawnChangedBinding();
+	}
+}
+
+AActor* UGraspComponent::GetTargetingSource_Implementation() const
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::GetTargetingSource);
+	
+	switch (DefaultTargetingSource)
+	{
+	case EGraspTargetingSource::Pawn: return Controller ? Controller->GetPawn() : nullptr;
+	case EGraspTargetingSource::PawnIfValid:
+		{
+			if (Controller && Controller->GetPawn())
+			{
+				return Controller->GetPawn();
+			}
+			return Controller;
+		}
+	case EGraspTargetingSource::Controller: return Controller;
+	}
+	return nullptr;
+}
+
+TMap<FGameplayTag, UTargetingPreset*> UGraspComponent::GetTargetingPresets_Implementation() const
+{
+	return DefaultTargetingPresets;
+}
+
+const TSubclassOf<UGameplayAbility>& UGraspComponent::GetGraspAbility(UGraspData* Data) const
+{
+	return Data->GraspAbility;
+}
+
+void UGraspComponent::UpdatePawnChangedBinding()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::UpdatePawnChangedBinding);
+
+	// We call this if we changed to allow this property to be modified during runtime
+	
+	if (IsValid(Controller))
+	{
+		if (Controller->OnPossessedPawnChanged.IsAlreadyBound(this, &ThisClass::OnPawnChanged))
+		{
+			Controller->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::OnPawnChanged);
+		}
+
+		// If scanning not enabled then don't bind
+		if (ScanAbilityHandle.IsValid())
+		{
+			if (bUpdateTargetingPresetsOnPawnChange || bEndTargetingRequestsOnPawnChange)
+			{
+				Controller->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::OnPawnChanged);
+			}
+		}
+	}
+}
+
+void UGraspComponent::OnPawnChanged(APawn* OldPawn, APawn* NewPawn)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::OnPawnChanged);
+
+	// Optionally end targeting requests
+	if (bEndTargetingRequestsOnPawnChange)
+	{
+		EndAllTargetingRequests();
+	}
+
+	// Optionally update targeting presets
+	if (bUpdateTargetingPresetsOnPawnChange)
+	{
+		UpdateTargetingPresets();
+	}
+}
+
+void UGraspComponent::UpdateTargetingPresets()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::UpdateTargetingPresets);
+	
+	const TMap<FGameplayTag, UTargetingPreset*> LastTargetingPresets = CurrentTargetingPresets;
+	CurrentTargetingPresets = GetTargetingPresets();
+
+	// Clear out any interact tags that are no longer valid
+	for (const auto& Preset : LastTargetingPresets)
+	{
+		if (!CurrentTargetingPresets.Contains(Preset.Key))
+		{
+			EndTargetingRequests(Preset.Key);
+		}
+	}
+}
+
+void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::GraspTargetsReady);
+
+	if (!HasValidData())
+	{
+		return;
+	}
+	
+	// Update our current focus results
+	TArray<FGraspScanResult> LastScanResults = CurrentScanResults;
+	CurrentScanResults = Results;
+	
+	// We need to remove any abilities granted for the old results unless they are still valid
+	for (const FGraspScanResult& Result : LastScanResults)
+	{
+		// If still valid, don't remove
+		if (CurrentScanResults.Contains(Result))  // This compares the Interactable actor
+		{
+			continue;
+		}
+
+		// Actor is no longer valid
+		const AActor* Interactable = Result.Interactable.IsValid() ? Result.Interactable.Get() : nullptr;
+		if (!Interactable)
+		{
+			continue;
+		}
+
+		// No data to retrieve ability from
+		if (!Result.Data)
+		{
+			continue;
+		}
+
+		// Get the ability to remove
+		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Result.Data);
+
+		// No ability to remove
+		if (!Ability)
+		{
+			continue;
+		}
+
+		// Retrieve the ability data
+		FGraspAbilityData* Data = AbilityData.Find(Ability);
+
+		// No ability data, already removed previously during this loop
+		if (!Data)
+		{
+			continue;
+		}
+
+		// This is a common ability, so we don't need to process it
+		if (Data->bPersistent)
+		{
+			continue;
+		}
+
+		// Has the ability already been removed?
+		if (!Data->Handle.IsValid())
+		{
+			continue;
+		}
+
+		// Are we (partially) responsible for this ability?
+		if (Data->Interactables.Contains(Result.Interactable.Get()))
+		{
+			// Remove our responsibility
+			Data->Interactables.Remove(Result.Interactable.Get());
+
+			// Remove any invalid interactables
+			Data->Interactables.RemoveAll([](const TWeakObjectPtr<AActor>& WeakInteractable)
+			{
+				return !WeakInteractable.IsValid();
+			});
+
+			UE_LOG(LogGrasp, VeryVerbose,
+				TEXT("%s GraspComponent::GraspTargetsReady: Removing ability interactable %s"),
+				*GetRoleString(), *Interactable->GetName());
+			
+			// If this is the last interactable, remove the ability
+			if (Data->Interactables.Num() == 0)
+			{
+				UE_LOG(LogGrasp, Verbose,
+					TEXT("%s GraspComponent::GraspTargetsReady: Removing ability %s"),
+					*GetRoleString(), *Ability->GetName());
+
+				PreClearGraspAbility(Ability, *Data);
+				ASC->ClearAbility(Data->Handle);
+				AbilityData.Remove(Ability);
+			}
+		}
+	}
+
+	// Now we need to grant any new abilities that aren't pre-granted
+	for (const FGraspScanResult& Result : Results)
+	{
+		// No data available
+		if (!Result.Data)
+		{
+			UE_LOG(LogGrasp, Error,
+				TEXT("%s GraspComponent::GraspTargetsReady: No GraspData available for %s"),
+				*GetRoleString(), *Result.Interactable->GetName());
+			continue;
+		}
+
+		// No ability to grant
+		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Result.Data);
+		if (!Ability)
+		{
+			UE_LOG(LogGrasp, Error,
+				TEXT("%s GraspComponent::GraspTargetsReady: No ability to grant for %s"),
+				*GetRoleString(), *Result.Interactable->GetName());
+		}
+
+		// Add ability data
+		FGraspAbilityData& Data = AbilityData.FindOrAdd(Ability);
+
+		// This is a common ability, so we don't need to process it
+		if (Data.bPersistent)
+		{
+			continue;
+		}
+
+		// This ability is already granted
+		if (Data.Handle.IsValid())
+		{
+			continue;
+		}
+
+		// Too far away to grant the ability
+		if (Result.NormalizedScanDistance > Result.Data->NormalizedGrantAbilityDistance)
+		{
+			UE_LOG(LogGrasp, VeryVerbose,
+				TEXT("%s GraspComponent::GraspTargetsReady: Not granting ability %s to %s, too far away. NormalizedDistance: %.1f"),
+				*GetRoleString(), *Ability->GetName(), *Result.Interactable->GetName(), Result.NormalizedScanDistance);
+			continue;
+		}
+
+		UE_LOG(LogGrasp, Verbose,
+			TEXT("%s GraspComponent::GraspTargetsReady: Granting ability %s to %s"),
+			*GetRoleString(), *Ability->GetName(), *Result.Interactable->GetName());
+
+		// Grant the ability
+		FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
+			INDEX_NONE, this));
+		
+		// Add it to our data
+		if (Handle.IsValid())
+		{
+			Data.Handle = Handle;
+			Data.Ability = Ability;
+			Data.Interactables.Add(Result.Interactable.Get());
+
+			// Extension point
+			PostGiveGraspAbility(Ability, Data);
+		}
+	}
+}
+
+void UGraspComponent::PauseGrasp(bool bPaused, bool bEndTargetingRequestsOnPause)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::PauseGrasp);
+	
+	if (bEndTargetingRequestsOnPause && bPaused)
+	{
+		EndAllTargetingRequests(false);
+	}
+	(void)OnPauseGrasp.ExecuteIfBound(bPaused);
+}
+
+void UGraspComponent::EndTargetingRequests(const FGameplayTag& PresetTag, bool bNotifyGrasp)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::EndTargetingRequests);
+	
+	if (!IsValid(GetWorld()) || !IsValid(GetWorld()->GetGameInstance()))
+	{
+		return;
+	}
+
+	if (UTargetingSubsystem* TargetSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UTargetingSubsystem>())
+	{
+		// Oddly, there is no 'end all requests' option, and the handles are not accessible, so we track the handles ourselves
+		TArray<FGameplayTag> RemovedRequests;
+		for (auto& Request : TargetingRequests)
+		{
+			// If no tag, remove them all
+			if (!PresetTag.IsValid() || Request.Key == PresetTag)
+			{
+				RemovedRequests.Add(Request.Key);
+				TargetSubsystem->RemoveAsyncTargetingRequestWithHandle(Request.Value);
+			}
+		}
+
+		// If all requests were removed, clear the array
+		if (RemovedRequests.Num() == TargetingRequests.Num())
+		{
+			TargetingRequests.Empty();
+		}
+		else
+		{
+			for (auto& RemovedRequest : RemovedRequests)
+			{
+				TargetingRequests.Remove(RemovedRequest);
+			}
+		}
+	}
+
+	// If we removed all requests, call the callback to tell Grasp to update itself
+	// It won't receive any callback if there is no pending request, so we need to trigger this
+	if (TargetingRequests.Num() == 0 && bNotifyGrasp)
+	{
+		(void)OnRequestGrasp.ExecuteIfBound();
+	}
+}
+
+void UGraspComponent::ClearAllGrantedGameplayAbilities(bool bIncludeCommonAbilities, bool bIncludeScanAbility, bool bEmptyData)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::ClearAllGrantedGameplayAbilities);
+	
+	// Clear all granted gameplay abilities
+	for (auto& Entry : AbilityData)
+	{
+		FGraspAbilityData& Data = Entry.Value;
+
+		if (bIncludeCommonAbilities || !Data.bPersistent)
+		{
+			PreClearGraspAbility(Data.Ability, Data);
+			ASC->ClearAbility(Data.Handle);
+			Data.Handle = FGameplayAbilitySpecHandle();
+			Data.Ability = nullptr;
+		}
+	}
+
+	// Optionally clear the scan ability too
+	if (bIncludeScanAbility && ScanAbilityHandle.IsValid())
+	{
+		ASC->ClearAbility(ScanAbilityHandle);
+		ScanAbilityHandle = FGameplayAbilitySpecHandle();
+	}
+
+	// Can only empty the data if we reset the common abilities also
+	if (AbilityData.Num() == 0 && bEmptyData)
+	{
+		// Empty the array so it releases the allocated memory
+		// May cause frame loss
+		AbilityData.Empty();
+	}
+}
+
+bool UGraspComponent::HasValidData() const
+{
+	return IsValid(Controller) && ASC.IsValid();
+}
+
+FString UGraspComponent::GetRoleString() const
+{
+	if (IsValid(GetOwner()))
+	{
+		return GetOwner()->HasAuthority() ? TEXT("[ Auth ]") : TEXT("[ Client ]");
+	}
+	return "";
+}
+
+#undef LOCTEXT_NAMESPACE
