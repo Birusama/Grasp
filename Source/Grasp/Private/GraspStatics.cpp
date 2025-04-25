@@ -5,6 +5,7 @@
 
 #include "Engine/Engine.h"
 #include "DrawDebugHelpers.h"
+#include "Graspable.h"
 #include "GraspComponent.h"
 #include "GraspData.h"
 #include "GameFramework/PlayerState.h"
@@ -220,109 +221,74 @@ bool UGraspStatics::CanInteractWithinHeight(const AActor* Interactor, const FVec
 		MaxHeightAbove, MaxHeightBelow);
 }
 
-EGraspInteractQuery UGraspStatics::CanInteractWith(const AActor* Interactor, UGraspData* Data,
-	TArray<FGraspInteractPoint>& InteractPoints, float& NormalizedAngleDiff, float& NormalizedDistance,
-	float& NormalizedHighlightDistance, FGraspInteractPoint& BestMarker)
+EGraspQueryResult UGraspStatics::CanInteractWith(const AActor* Interactor, UPrimitiveComponent* Component,
+	float& NormalizedAngleDiff, float& NormalizedDistance, float& NormalizedHighlightDistance)
 {
 	NormalizedAngleDiff = 0.f;
 	NormalizedDistance = 0.f;
 	NormalizedHighlightDistance = 0.f;
-	
+
+	// Validate the interactor
 	if (!IsValid(Interactor))
 	{
-		return EGraspInteractQuery::None;
+		return EGraspQueryResult::None;
 	}
 
-	if (!ensure(Data != nullptr))
+	// Validate the graspable
+	if (!Component)
 	{
-		return EGraspInteractQuery::None;
+		return EGraspQueryResult::None;
 	}
 
-	const bool b2D = Data->bGraspDistance2D;
-
-	// Find the closest marker -- we test the closest first
-	const FVector InteractorLoc = Interactor->GetActorLocation();
-	InteractPoints.Sort([&InteractorLoc, &b2D](const FGraspInteractPoint& A, const FGraspInteractPoint& B)
+	// Validate the grasp data
+	const IGraspable* Graspable = CastChecked<IGraspable>(Component);
+	if (!ensure(Graspable->GetGraspData() != nullptr))
 	{
-		const float DistA = b2D ? FVector::Dist2D(InteractorLoc, A.Location) : FVector::Dist(InteractorLoc, A.Location);
-		const float DistB = b2D ? FVector::Dist2D(InteractorLoc, B.Location) : FVector::Dist(InteractorLoc, B.Location);
-		return DistA < DistB;
-	});
+		return EGraspQueryResult::None;
+	}
 
-	// Test each marker
-	for (const FGraspInteractPoint& Point : InteractPoints)
+	const FVector InteractorLocation = Interactor->GetActorLocation();
+	const FVector Location = Component->GetComponentLocation();
+	const FVector Forward = Component->GetForwardVector();
+	const UGraspData* Data = Graspable->GetGraspData();
+
+	// Check if within distance
+	if (!IsInteractableWithinDistance(Location, InteractorLocation, Data->MaxGraspDistance))
 	{
-		// Check if within distance
-		if (!IsInteractableWithinDistance(Point.Location, InteractorLoc, Data->MaxGraspDistance))
+		// Check if highlight is enabled and within distance
+		if (Data->MaxHighlightDistance > 0.f &&
+			IsInteractableWithinDistance(Location, InteractorLocation, Data->MaxHighlightDistance))
 		{
-			// Check if highlight is enabled and within distance
-			if (Data->MaxHighlightDistance > 0.f &&
-				IsInteractableWithinDistance(Point.Location, InteractorLoc, Data->MaxHighlightDistance))
-			{
-				NormalizedHighlightDistance = FMath::Clamp(
-					FVector::Dist2D(Point.Location, InteractorLoc) / Data->MaxHighlightDistance, 0.f, 1.f);
-
-				// Output the best marker
-				BestMarker = Point;
-
-				// We sorted by distance, if this one is too far, the rest are too
-				return EGraspInteractQuery::Highlight;
-			}
+			NormalizedHighlightDistance = FMath::Clamp(
+				FVector::Dist2D(Location, InteractorLocation) / Data->MaxHighlightDistance, 0.f, 1.f);
 
 			// We sorted by distance, if this one is too far, the rest are too
-			return EGraspInteractQuery::None;
+			return EGraspQueryResult::Highlight;
 		}
 
-		const float DistNormalized = b2D ? FVector::Dist2D(Point.Location, InteractorLoc) :
-			FVector::Dist(Point.Location, InteractorLoc);
-		NormalizedDistance = FMath::Clamp(DistNormalized / Data->MaxGraspDistance, 0.f, 1.f);
-
-		// Check if within angle
-		if (!IsInteractableWithinAngle(Point.Location, InteractorLoc, Point.Forward,
-			Data->MaxGraspAngle))
-		{
-			return EGraspInteractQuery::None;
-		}
-		
-		NormalizedAngleDiff = FMath::Clamp(
-			FVector::Dist2D(Point.Location, InteractorLoc) / Data->MaxGraspAngle, 0.f, 1.f);
-
-		// Check if within height
-		if (!IsInteractableWithinHeight(Point.Location, InteractorLoc, Data->MaxHeightAbove, Data->MaxHeightBelow))
-		{
-			return EGraspInteractQuery::None;
-		}
-
-		BestMarker = Point;
-		return EGraspInteractQuery::Interact;
+		// We sorted by distance, if this one is too far, the rest are too
+		return EGraspQueryResult::None;
 	}
 
-	return EGraspInteractQuery::None;
-}
+	const float DistNormalized = Data->bGraspDistance2D ? FVector::Dist2D(Location, InteractorLocation) :
+		FVector::Dist(Location, InteractorLocation);
+	NormalizedDistance = FMath::Clamp(DistNormalized / Data->MaxGraspDistance, 0.f, 1.f);
 
-TArray<FGraspInteractPoint> UGraspStatics::GetGraspInteractPoints(const TArray<UGraspInteractComponent*>& Components)
-{
-	TArray<FGraspInteractPoint> InteractPoints;
-	if (Components.Num() > 0)
+	// Check if within angle
+	if (!IsInteractableWithinAngle(Location, InteractorLocation, Forward,
+		Data->MaxGraspAngle))
 	{
-		for (const UGraspInteractComponent* Component : Components)
-		{
-			InteractPoints.Add({ Component });
-		}
+		return EGraspQueryResult::None;
 	}
-	return InteractPoints;
-}
+	
+	NormalizedAngleDiff = FMath::Clamp(
+		FVector::Dist2D(Location, InteractorLocation) / Data->MaxGraspAngle, 0.f, 1.f);
 
-TArray<FGraspInteractPoint> UGraspStatics::GetGraspSimpleInteractPoints(
-	const TArray<USceneComponent*>& Components)
-{
-	TArray<FGraspInteractPoint> InteractPoints;
-	if (Components.Num() > 0)
+	// Check if within height
+	if (!IsInteractableWithinHeight(Location, InteractorLocation, Data->MaxHeightAbove, Data->MaxHeightBelow))
 	{
-		for (const USceneComponent* Component : Components)
-		{
-			InteractPoints.Add({ Component });
-		}
+		return EGraspQueryResult::None;
 	}
-	return InteractPoints;
+
+	return EGraspQueryResult::Interact;
 }

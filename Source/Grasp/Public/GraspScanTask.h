@@ -41,7 +41,7 @@ public:
 
 	void WaitForGrasp(float Delay, const TOptional<FString>& Reason = {}, const TOptional<FString>& VeryVerboseReason = {});
 	void RequestGrasp();
-	void OnGraspComplete(FTargetingRequestHandle TargetingHandle, FGameplayTag InteractTag);
+	void OnGraspComplete(FTargetingRequestHandle TargetingHandle, FGameplayTag ScanTag);
 
 	/** Broadcast from GraspComponent */
 	UFUNCTION()

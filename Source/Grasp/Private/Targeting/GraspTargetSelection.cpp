@@ -3,6 +3,7 @@
 
 #include "Targeting/GraspTargetSelection.h"
 
+#include "GraspDeveloper.h"
 #include "TargetingSystem/TargetingSubsystem.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
@@ -37,6 +38,10 @@ namespace FGraspCVars
 UGraspTargetSelection::UGraspTargetSelection(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	const TEnumAsByte<enum ECollisionChannel>& DefaultObjectType = GetDefault<UGraspDeveloper>()->GraspDefaultObjectType;
+	const TEnumAsByte<EObjectTypeQuery> ObjectType = UCollisionProfile::Get()->ConvertToObjectType(DefaultObjectType);
+	CollisionObjectTypes.Add(ObjectType);
+
 	CollisionChannel = ECC_Visibility;
 	bUseRelativeLocationOffset = true;
 	bIgnoreSourceActor = true;

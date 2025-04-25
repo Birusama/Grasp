@@ -28,12 +28,12 @@ class GRASP_API UGraspComponent : public UActorComponent
 public:
 	/**
 	 * These abilities are pre-granted and never removed
-	 * Generally this is preferable if it is an interact ability that is used frequently
+	 * Generally this is preferable if it is a grasp ability that is used frequently
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Grasp)
-	TArray<TSubclassOf<UGameplayAbility>> CommonInteractAbilities;
+	TArray<TSubclassOf<UGameplayAbility>> CommonGraspAbilities;
 
-	/** Interact presets used unless overriding GetTargetingPresets() */
+	/** Targeting presets for finding graspables to interact with, used unless overriding GetTargetingPresets() */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Grasp)
 	TMap<FGameplayTag, UTargetingPreset*> DefaultTargetingPresets = { { FGraspTags::Grasp_Interact, nullptr } };
 
@@ -110,7 +110,7 @@ public:
 
 	/**
 	 * Call once your Pawn is possessed to initialize Grasp
-	 * Providing ScanAbility is optional, without it there will be no scanning and only common interact abilities will be used
+	 * Providing ScanAbility is optional, without it there will be no scanning and only common grasp abilities will be used
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category=Grasp)
 	void InitializeGrasp(UAbilitySystemComponent* InAbilitySystemComponent, TSubclassOf<UGameplayAbility> ScanAbility);
@@ -138,7 +138,7 @@ public:
 	 * Interaction that doesn't grant an ability isn't supported
 	 * @warning This ability is a key for interaction mappings and must not change during runtime
 	 */
-	virtual const TSubclassOf<UGameplayAbility>& GetGraspAbility(UGraspData* Data) const;
+	virtual const TSubclassOf<UGameplayAbility>& GetGraspAbility(const UGraspData* Data) const;
 
 public:
 	/** Rebind the OnPossessedPawnChanged binding if the requirement changes */

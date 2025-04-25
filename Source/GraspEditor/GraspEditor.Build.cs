@@ -18,8 +18,6 @@ public class GraspEditor : ModuleRules
             {
                 "CoreUObject",
                 "Engine",
-                "Slate",
-                "SlateCore"
             }
         );
     }

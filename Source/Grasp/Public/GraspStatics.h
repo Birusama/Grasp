@@ -48,7 +48,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static UGraspComponent* FindGraspComponentForPlayerState(APlayerState* PlayerState);
-	
+
 public:
 	// /**
 	//  * Determine if we can interact with the interactable
@@ -142,23 +142,6 @@ public:
 		float MaxHeightAbove, float MaxHeightBelow);
 	
 	UFUNCTION(BlueprintCallable, Category=Grasp)
-	static EGraspInteractQuery CanInteractWith(const AActor* Interactor, UGraspData* GraspData,
-		UPARAM(ref)TArray<FGraspInteractPoint>& InteractPoints, float& NormalizedAngleDiff, float& NormalizedDistance,
-		float& NormalizedHighlightDistance, FGraspInteractPoint& BestMarker);
-
-	/** 
-	 * Get the GraspInteractPoints for the given Interaction Components
-	 * @param Components The components to get the interact points
-	 * @return The array of GraspInteractPoints
-	 */
-	UFUNCTION(BlueprintCallable, Category=Grasp)
-	static TArray<FGraspInteractPoint> GetGraspInteractPoints(const TArray<UGraspInteractComponent*>& Components);
-	
-	/** 
-	 * Get the GraspInteractPoints for the given SceneComponents
-	 * @param Components The components to get the interact points
-	 * @return The array of GraspInteractPoints
-	 */
-	UFUNCTION(BlueprintCallable, Category=Grasp)
-	static TArray<FGraspInteractPoint> GetGraspSimpleInteractPoints(const TArray<USceneComponent*>& Components);
+	static EGraspQueryResult CanInteractWith(const AActor* Interactor, UPrimitiveComponent* Graspable,
+		float& NormalizedAngleDiff, float& NormalizedDistance, float& NormalizedHighlightDistance);
 };

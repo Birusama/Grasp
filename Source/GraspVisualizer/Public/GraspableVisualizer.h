@@ -9,7 +9,7 @@
  * Draws editor visualizers for interactable components
  * This visualizes the interaction distance and angle and height
  */
-class GRASPVISUALIZER_API FGraspInteractComponentVisualizer : public FComponentVisualizer
+class GRASPVISUALIZER_API FGraspableVisualizer : public FComponentVisualizer
 {
 public:
 	virtual void DrawVisualization(const UActorComponent* Component, const FSceneView* View,

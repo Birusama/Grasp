@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "GraspTypes.generated.h"
 
-class UGraspInteractComponent;
+class IGraspable;
 class UGameplayAbility;
 class UGraspData;
 class UGraspComponent;
@@ -26,7 +26,7 @@ enum class EGraspTargetingSource : uint8
 };
 
 UENUM(BlueprintType)
-enum class EGraspInteractQuery : uint8
+enum class EGraspQueryResult : uint8
 {
 	None			UMETA(ToolTip="Cannot interact or highlight"),
 	Highlight		UMETA(ToolTip="Highlight, but not interact -- typically for driving UI"),
@@ -42,33 +42,6 @@ enum class EGraspFocusMode : uint8
 };
 
 /**
- * Cached properties from interactable component
- */
-USTRUCT(BlueprintType)
-struct GRASP_API FGraspInteractPoint
-{
-	GENERATED_BODY()
-
-	FGraspInteractPoint()
-		: Location(FVector::ZeroVector)
-		, Forward(FVector::ZeroVector)
-		, ContextTag(FGameplayTag::EmptyTag)
-	{}
-	
-	FGraspInteractPoint(const USceneComponent* InComponent);
-	FGraspInteractPoint(const UGraspInteractComponent* InComponent);
-
-	UPROPERTY(BlueprintReadWrite, Category=Grasp)
-	FVector Location;
-
-	UPROPERTY(BlueprintReadWrite, Category=Grasp)
-	FVector Forward;
-
-	UPROPERTY(BlueprintReadWrite, Category=Grasp)
-	FGameplayTag ContextTag;
-};
-
-/**
  * Grasp will scan for interactables to retrieve their data and ability
  */
 USTRUCT()
@@ -76,35 +49,24 @@ struct GRASP_API FGraspScanResult
 {
 	GENERATED_BODY()
 
-	FGraspScanResult(const FGameplayTag& InInteractTag = FGameplayTag::EmptyTag,
-		const TWeakObjectPtr<AActor>& InInteractable = nullptr,
-		UGraspData* InData = nullptr, const TArray<FGraspInteractPoint>& InMarkerCache = {},
+	FGraspScanResult(const FGameplayTag& InScanTag = FGameplayTag::EmptyTag,
+		const TWeakObjectPtr<const UPrimitiveComponent>& InGraspable = nullptr,
 		float InNormalizedAvatarDistance = 0.f)
-		: InteractTag(InInteractTag)
-		, Interactable(InInteractable)
-		, Data(InData)
-		, InteractPoints(InMarkerCache)
+		: ScanTag(InScanTag)
+		, Graspable(InGraspable)
 		, NormalizedScanDistance(InNormalizedAvatarDistance)
 	{}
 
 	/** Tag used for the targeting preset that discovered this interactable during Grasp scanning */
 	UPROPERTY()
-	FGameplayTag InteractTag;
+	FGameplayTag ScanTag;
 
 	/** The actor being interacted with, e.g. a door or chest */
 	UPROPERTY()
-	TWeakObjectPtr<AActor> Interactable;
-
-	/** Contains the ability and parameters for interaction */
-	UPROPERTY()
-	UGraspData* Data;
-
-	/** Cached locations and vectors, i.e. points from which we can interact */
-	UPROPERTY()
-	TArray<FGraspInteractPoint> InteractPoints;
+	TWeakObjectPtr<const UPrimitiveComponent> Graspable;
 
 	/**
-	 * Normalized Distance between Avatar and Interactable root location on a 0-1 scale
+	 * Normalized Distance between Avatar and Graspable location on a 0-1 scale
 	 * Normalized between 0 and the max scan range
 	 * Abilities are granted when we're closer and removed when we're further away
 	 */
@@ -113,7 +75,7 @@ struct GRASP_API FGraspScanResult
 
 	bool operator==(const FGraspScanResult& Other) const
 	{
-		return Interactable == Other.Interactable;
+		return Graspable == Other.Graspable;
 	}
 
 	bool operator!=(const FGraspScanResult& Other) const
@@ -148,5 +110,5 @@ struct GRASP_API FGraspAbilityData
 
 	/** Interactables that are in range and require this ability remain active */
 	UPROPERTY()
-	TArray<TWeakObjectPtr<AActor>> Interactables;
+	TArray<TWeakObjectPtr<const UPrimitiveComponent>> Graspables;
 };

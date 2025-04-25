@@ -4,6 +4,7 @@
 #include "GraspComponent.h"
 
 #include "AbilitySystemComponent.h"
+#include "Graspable.h"
 #include "GraspData.h"
 #include "TargetingSystem/TargetingSubsystem.h"
 #include "GameFramework/Controller.h"
@@ -50,8 +51,8 @@ void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemCo
 		// Cache the owning controller
 		Controller = Cast<AController>(GetOwner());
 
-		// Pre-grant common interact abilities
-		for (const TSubclassOf<UGameplayAbility>& Ability : CommonInteractAbilities)
+		// Pre-grant common grasp abilities
+		for (const TSubclassOf<UGameplayAbility>& Ability : CommonGraspAbilities)
 		{
 			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
 				INDEX_NONE, this));
@@ -120,7 +121,7 @@ TMap<FGameplayTag, UTargetingPreset*> UGraspComponent::GetTargetingPresets_Imple
 	return DefaultTargetingPresets;
 }
 
-const TSubclassOf<UGameplayAbility>& UGraspComponent::GetGraspAbility(UGraspData* Data) const
+const TSubclassOf<UGameplayAbility>& UGraspComponent::GetGraspAbility(const UGraspData* Data) const
 {
 	return Data->GraspAbility;
 }
@@ -173,7 +174,7 @@ void UGraspComponent::UpdateTargetingPresets()
 	const TMap<FGameplayTag, UTargetingPreset*> LastTargetingPresets = CurrentTargetingPresets;
 	CurrentTargetingPresets = GetTargetingPresets();
 
-	// Clear out any interact tags that are no longer valid
+	// Clear out any tags that are no longer valid
 	for (const auto& Preset : LastTargetingPresets)
 	{
 		if (!CurrentTargetingPresets.Contains(Preset.Key))
@@ -200,26 +201,27 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 	for (const FGraspScanResult& Result : LastScanResults)
 	{
 		// If still valid, don't remove
-		if (CurrentScanResults.Contains(Result))  // This compares the Interactable actor
+		if (CurrentScanResults.Contains(Result))  // This compares the Graspable component
 		{
 			continue;
 		}
 
-		// Actor is no longer valid
-		const AActor* Interactable = Result.Interactable.IsValid() ? Result.Interactable.Get() : nullptr;
-		if (!Interactable)
+		// Graspable is no longer valid
+		const UPrimitiveComponent* Component = Result.Graspable.IsValid() ? Result.Graspable.Get() : nullptr;
+		if (!Component)
 		{
 			continue;
 		}
+		const IGraspable* Graspable = CastChecked<IGraspable>(Component);
 
 		// No data to retrieve ability from
-		if (!Result.Data)
+		if (!Graspable->GetGraspData())
 		{
 			continue;
 		}
 
 		// Get the ability to remove
-		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Result.Data);
+		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Graspable->GetGraspData());
 
 		// No ability to remove
 		if (!Ability)
@@ -249,23 +251,23 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		}
 
 		// Are we (partially) responsible for this ability?
-		if (Data->Interactables.Contains(Result.Interactable.Get()))
+		if (Data->Graspables.Contains(Result.Graspable.Get()))
 		{
 			// Remove our responsibility
-			Data->Interactables.Remove(Result.Interactable.Get());
+			Data->Graspables.Remove(Result.Graspable.Get());
 
-			// Remove any invalid interactables
-			Data->Interactables.RemoveAll([](const TWeakObjectPtr<AActor>& WeakInteractable)
+			// Remove any invalid graspables
+			Data->Graspables.RemoveAll([](const TWeakObjectPtr<const UPrimitiveComponent>& WeakGraspable)
 			{
-				return !WeakInteractable.IsValid();
+				return !WeakGraspable.IsValid();
 			});
 
 			UE_LOG(LogGrasp, VeryVerbose,
-				TEXT("%s GraspComponent::GraspTargetsReady: Removing ability interactable %s"),
-				*GetRoleString(), *Interactable->GetName());
+				TEXT("%s GraspComponent::GraspTargetsReady: Removing ability graspable %s"),
+				*GetRoleString(), *Component->GetName());
 			
-			// If this is the last interactable, remove the ability
-			if (Data->Interactables.Num() == 0)
+			// If this is the last graspable, remove the ability
+			if (Data->Graspables.Num() == 0)
 			{
 				UE_LOG(LogGrasp, Verbose,
 					TEXT("%s GraspComponent::GraspTargetsReady: Removing ability %s"),
@@ -281,22 +283,30 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 	// Now we need to grant any new abilities that aren't pre-granted
 	for (const FGraspScanResult& Result : Results)
 	{
+		// No graspable, shouldn't be possible
+		const UPrimitiveComponent* Component = Result.Graspable.IsValid() ? Result.Graspable.Get() : nullptr;
+		if (!ensure(Component != nullptr))
+		{
+			continue;
+		}
+		const IGraspable* Graspable = CastChecked<IGraspable>(Component);
+		
 		// No data available
-		if (!Result.Data)
+		if (!Graspable->GetGraspData())
 		{
 			UE_LOG(LogGrasp, Error,
 				TEXT("%s GraspComponent::GraspTargetsReady: No GraspData available for %s"),
-				*GetRoleString(), *Result.Interactable->GetName());
+				*GetRoleString(), *Result.Graspable->GetName());
 			continue;
 		}
 
 		// No ability to grant
-		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Result.Data);
+		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Graspable->GetGraspData());
 		if (!Ability)
 		{
 			UE_LOG(LogGrasp, Error,
 				TEXT("%s GraspComponent::GraspTargetsReady: No ability to grant for %s"),
-				*GetRoleString(), *Result.Interactable->GetName());
+				*GetRoleString(), *Result.Graspable->GetName());
 		}
 
 		// Add ability data
@@ -315,17 +325,17 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		}
 
 		// Too far away to grant the ability
-		if (Result.NormalizedScanDistance > Result.Data->NormalizedGrantAbilityDistance)
+		if (Result.NormalizedScanDistance > Graspable->GetGraspData()->NormalizedGrantAbilityDistance)
 		{
 			UE_LOG(LogGrasp, VeryVerbose,
 				TEXT("%s GraspComponent::GraspTargetsReady: Not granting ability %s to %s, too far away. NormalizedDistance: %.1f"),
-				*GetRoleString(), *Ability->GetName(), *Result.Interactable->GetName(), Result.NormalizedScanDistance);
+				*GetRoleString(), *Ability->GetName(), *Result.Graspable->GetName(), Result.NormalizedScanDistance);
 			continue;
 		}
 
 		UE_LOG(LogGrasp, Verbose,
 			TEXT("%s GraspComponent::GraspTargetsReady: Granting ability %s to %s"),
-			*GetRoleString(), *Ability->GetName(), *Result.Interactable->GetName());
+			*GetRoleString(), *Ability->GetName(), *Result.Graspable->GetName());
 
 		// Grant the ability
 		FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
@@ -336,7 +346,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		{
 			Data.Handle = Handle;
 			Data.Ability = Ability;
-			Data.Interactables.Add(Result.Interactable.Get());
+			Data.Graspables.Add(Result.Graspable.Get());
 
 			// Extension point
 			PostGiveGraspAbility(Ability, Data);

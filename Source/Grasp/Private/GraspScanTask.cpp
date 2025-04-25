@@ -18,8 +18,8 @@
 #include "Logging/MessageLog.h"
 #endif
 
+#include "Graspable.h"
 #include "GraspData.h"
-#include "GraspInteractable.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspScanTask)
 
@@ -339,14 +339,14 @@ void UGraspScanTask::RequestGrasp()
 #endif
 }
 
-void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FGameplayTag InteractTag)
+void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FGameplayTag ScanTag)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspScanTask::OnGraspComplete);
 
 	if (FGraspCVars::bLogVeryVerboseScanRequest)
 	{
 		UE_LOG(LogGrasp, VeryVerbose, TEXT("%s GraspScanTask::OnGraspComplete: %s"), *GetRoleString(),
-			*InteractTag.ToString());
+			*ScanTag.ToString());
 	}
 
 	if (!GC.IsValid())
@@ -388,52 +388,31 @@ void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FG
 			for (FTargetingDefaultResultData& ResultData : Results->TargetResults)
 			{
 				FHitResult& Hit = ResultData.HitResult;
-				if (!Hit.GetActor())
+
+				// Requires a valid component
+				if (!Hit.GetComponent())
 				{
 					continue;
 				}
-				
-				AActor* HitActor = Hit.GetActor();
 
-				// We filter based on interface, so assume its implemented
-				// Users might crash here if they invalidate the targeting setup... is it the best way?
-#if WITH_EDITOR
-				if (!HitActor->Implements<UGraspInteractable>())
-				{
-					FMessageLog("PIE").Error(FText::Format(
-						LOCTEXT("GraspInteractableNotFound",
-							"[ FATAL ERROR ] IGraspInteractable interface not found on {0} - Will crash non-editor builds - Ensure your TargetingPreset filters by GraspInteractable!! [SYSTEM END]"),
-							FText::FromString(HitActor->GetName())));
-					// We're crashed outside of editor, don't continue
-					return;
-				}
-#endif
-
-				// Retrieve the ability data and interaction points
-				TArray<FGraspInteractPoint> InteractPoints;
-				UGraspData* GraspData = IGraspInteractable::Execute_GetGraspData(HitActor, InteractPoints);
-
-				// Form the array of interaction points from the hit actor instead
-				if (InteractPoints.Num() == 0)
-				{
-					InteractPoints.Add({ HitActor->GetRootComponent() });
-				}
+				const IGraspable* Graspable = CastChecked<IGraspable>(Hit.GetComponent());  // Filtering already checked the type and data
+				const FVector Location = Hit.GetComponent()->GetComponentLocation();
 
 				// Calculate the normalized distance
 				const float GraspAbilityRadius = Hit.Distance;  // Targeting output the GraspAbilityRadius as Distance
-				Hit.Distance = GraspData->bGrantAbilityDistance2D ?
-					FVector::Dist2D(HitActor->GetActorLocation(), Hit.TraceStart) :
-					FVector::Dist(HitActor->GetActorLocation(), Hit.TraceStart);
+				Hit.Distance = Graspable->GetGraspData()->bGrantAbilityDistance2D ?
+					FVector::Dist2D(Location, Hit.TraceStart) :
+					FVector::Dist(Location, Hit.TraceStart);
 				const float NormalizedDistance = Hit.Distance / GraspAbilityRadius;
 
 				// Add the result to the array
-				FGraspScanResult Result = { InteractTag, HitActor, GraspData, InteractPoints, NormalizedDistance };
+				FGraspScanResult Result = { ScanTag, Hit.GetComponent(), NormalizedDistance };
 				ScanResults.Add(Result);
 			}
 		}
 
 		// Remove the request handle
-		GC->TargetingRequests.Remove(InteractTag);
+		GC->TargetingRequests.Remove(ScanTag);
 	}
 
 	// Broadcast the results

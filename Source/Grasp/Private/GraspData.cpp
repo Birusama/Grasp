@@ -32,6 +32,13 @@ void UGraspData::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyCh
 
 EDataValidationResult UGraspData::IsDataValid(class FDataValidationContext& Context) const
 {
+	// We can't interact if angle is 0
+	if (FMath::IsNearlyZero(MaxGraspAngle))
+	{
+		Context.AddError(NSLOCTEXT("GraspData", "InvalidGraspData", "MaxGraspAngle should be greater than 0"));
+		return EDataValidationResult::Invalid;
+	}
+	
 	// MaxHighlightDistance should be greater than MaxGraspDistance, unless MaxHighlightDistance is 0
 	if (MaxHighlightDistance > 0.f && MaxHighlightDistance < MaxGraspDistance)
 	{
