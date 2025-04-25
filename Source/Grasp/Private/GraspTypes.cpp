@@ -3,14 +3,31 @@
 
 #include "GraspTypes.h"
 
-#include "GraspInteractMarker.h"
+#include "GraspInteractComponent.h"
 
 DEFINE_LOG_CATEGORY(LogGrasp);
 
-#if WITH_EDITOR
-FGraspMarker::FGraspMarker(const UGraspInteractMarker* InMarker)
-	: RelativeLocation(InMarker->GetComponentLocation())
-	, RelativeRotation(InMarker->GetComponentQuat())
-	, AttachParent(InMarker->GetAttachParent())
-{}
-#endif
+FGraspInteractPoint::FGraspInteractPoint(const USceneComponent* InComponent)
+	: Location(FVector::ZeroVector)
+	, Forward(FVector::ZeroVector)
+	, ContextTag(FGameplayTag::EmptyTag)
+{
+	if (IsValid(InComponent))
+	{
+		Location = InComponent->GetComponentLocation();
+		Forward = InComponent->GetForwardVector();
+	}
+}
+
+FGraspInteractPoint::FGraspInteractPoint(const UGraspInteractComponent* InComponent)
+	: Location(FVector::ZeroVector)
+	, Forward(FVector::ZeroVector)
+	, ContextTag(FGameplayTag::EmptyTag)
+{
+	if (IsValid(InComponent))
+	{
+		Location = InComponent->GetComponentLocation();
+		Forward = InComponent->GetForwardVector();
+		ContextTag = InComponent->InteractContextTag;
+	}
+}

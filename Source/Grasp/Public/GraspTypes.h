@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "GraspTypes.generated.h"
 
-class UGraspInteractMarker;
+class UGraspInteractComponent;
 class UGameplayAbility;
 class UGraspData;
 class UGraspComponent;
@@ -42,53 +42,30 @@ enum class EGraspFocusMode : uint8
 };
 
 /**
- * Stores data about one UGraspInteractMarker
- * Allows editor markers to update location and rotation and cache for
- * non-editor builds
- * This saves on the expensive perf cost of updating scene components
+ * Cached properties from interactable component
  */
 USTRUCT(BlueprintType)
-struct GRASP_API FGraspMarker
+struct GRASP_API FGraspInteractPoint
 {
 	GENERATED_BODY()
 
-	FGraspMarker()
-		: RelativeLocation(FVector::ZeroVector)
-		, RelativeRotation(FQuat::Identity)
-		, AttachParent(nullptr)
+	FGraspInteractPoint()
+		: Location(FVector::ZeroVector)
+		, Forward(FVector::ZeroVector)
+		, ContextTag(FGameplayTag::EmptyTag)
 	{}
+	
+	FGraspInteractPoint(const USceneComponent* InComponent);
+	FGraspInteractPoint(const UGraspInteractComponent* InComponent);
 
-#if WITH_EDITOR
-	FGraspMarker(const UGraspInteractMarker* InMarker);
-#endif
+	UPROPERTY(BlueprintReadWrite, Category=Grasp)
+	FVector Location;
 
-protected:
-	UPROPERTY()
-	FVector RelativeLocation;
+	UPROPERTY(BlueprintReadWrite, Category=Grasp)
+	FVector Forward;
 
-	UPROPERTY()
-	FQuat RelativeRotation;
-
-	UPROPERTY()
-	USceneComponent* AttachParent;
-
-public:
-	/** This allows us to have doors that open on hinges updating the interact location */
-	FTransform GetTransform() const
-	{
-		const FTransform RelativeTransform = { RelativeRotation, RelativeLocation };
-		return AttachParent ? AttachParent->GetComponentTransform().GetRelativeTransform(RelativeTransform) : FTransform::Identity;
-	}
-
-	FVector GetLocation() const
-	{
-		return GetTransform().GetLocation();
-	}
-
-	FVector GetForwardVector() const
-	{
-		return GetTransform().GetUnitAxis(EAxis::X);
-	}
+	UPROPERTY(BlueprintReadWrite, Category=Grasp)
+	FGameplayTag ContextTag;
 };
 
 /**
@@ -101,12 +78,12 @@ struct GRASP_API FGraspScanResult
 
 	FGraspScanResult(const FGameplayTag& InInteractTag = FGameplayTag::EmptyTag,
 		const TWeakObjectPtr<AActor>& InInteractable = nullptr,
-		UGraspData* InData = nullptr, const TArray<FGraspMarker>& InMarkerCache = {},
+		UGraspData* InData = nullptr, const TArray<FGraspInteractPoint>& InMarkerCache = {},
 		float InNormalizedAvatarDistance = 0.f)
 		: InteractTag(InInteractTag)
 		, Interactable(InInteractable)
 		, Data(InData)
-		, Markers(InMarkerCache)
+		, InteractPoints(InMarkerCache)
 		, NormalizedScanDistance(InNormalizedAvatarDistance)
 	{}
 
@@ -122,9 +99,9 @@ struct GRASP_API FGraspScanResult
 	UPROPERTY()
 	UGraspData* Data;
 
-	/** Cached marker locations and vectors, i.e. points from which we can interact */
+	/** Cached locations and vectors, i.e. points from which we can interact */
 	UPROPERTY()
-	TArray<FGraspMarker> Markers;
+	TArray<FGraspInteractPoint> InteractPoints;
 
 	/**
 	 * Normalized Distance between Avatar and Interactable root location on a 0-1 scale

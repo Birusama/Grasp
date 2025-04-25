@@ -121,7 +121,7 @@ UGraspComponent* UGraspStatics::FindGraspComponentForPlayerState(APlayerState* P
 	return nullptr;
 }
 
-bool UGraspStatics::IsWithinInteractAngle(const FVector& SourceLocation, const FVector& TargetLocation, const FVector& FacingVector, float Degrees, bool bCheck2D, bool
+bool UGraspStatics::IsWithinInteractAngle(const FVector& SourceLocation, const FVector& TargetLocation, const FVector& Forward, float Degrees, bool bCheck2D, bool
 	bHalfCircle)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::IsWithinInteractAngle);
@@ -129,15 +129,15 @@ bool UGraspStatics::IsWithinInteractAngle(const FVector& SourceLocation, const F
 	const FVector Diff = TargetLocation - SourceLocation;
 	const FVector Dir = bCheck2D ? Diff.GetSafeNormal2D() : Diff.GetSafeNormal();
 	const float Radians = FMath::DegreesToRadians(Degrees * (bHalfCircle ? 1.f : 0.5f));
-	const float Acos = FMath::Acos(FacingVector | Dir);
+	const float Acos = FMath::Acos(Forward | Dir);
 	return Acos <= Radians;
 }
 
 bool UGraspStatics::IsInteractableWithinAngle(const FVector& InteractableLocation, const FVector& InteractorLocation,
-	const FVector& InteractorFacingVector, float Degrees)
+	const FVector& Forward, float Degrees)
 {
 	return IsWithinInteractAngle(InteractorLocation, InteractableLocation,
-		InteractorFacingVector, Degrees, true, false);
+		Forward, Degrees, true, false);
 }
 
 bool UGraspStatics::CanInteractWithinAngle(const AActor* Interactor, const FVector& InteractableLocation, float Degrees)
@@ -221,8 +221,8 @@ bool UGraspStatics::CanInteractWithinHeight(const AActor* Interactor, const FVec
 }
 
 EGraspInteractQuery UGraspStatics::CanInteractWith(const AActor* Interactor, UGraspData* Data,
-	TArray<FGraspMarker>& Markers, float& NormalizedAngleDiff, float& NormalizedDistance,
-	float& NormalizedHighlightDistance, FGraspMarker& BestMarker)
+	TArray<FGraspInteractPoint>& InteractPoints, float& NormalizedAngleDiff, float& NormalizedDistance,
+	float& NormalizedHighlightDistance, FGraspInteractPoint& BestMarker)
 {
 	NormalizedAngleDiff = 0.f;
 	NormalizedDistance = 0.f;
@@ -240,26 +240,30 @@ EGraspInteractQuery UGraspStatics::CanInteractWith(const AActor* Interactor, UGr
 
 	const bool b2D = Data->bGraspDistance2D;
 
-	// Find the closest marker -- test the closest first
+	// Find the closest marker -- we test the closest first
 	const FVector InteractorLoc = Interactor->GetActorLocation();
-	Markers.Sort([&InteractorLoc, &b2D](const FGraspMarker& A, const FGraspMarker& B)
+	InteractPoints.Sort([&InteractorLoc, &b2D](const FGraspInteractPoint& A, const FGraspInteractPoint& B)
 	{
-		const float DistA = b2D ? FVector::Dist2D(InteractorLoc, A.GetLocation()) : FVector::Dist(InteractorLoc, A.GetLocation());
-		const float DistB = b2D ? FVector::Dist2D(InteractorLoc, B.GetLocation()) : FVector::Dist(InteractorLoc, B.GetLocation());
+		const float DistA = b2D ? FVector::Dist2D(InteractorLoc, A.Location) : FVector::Dist(InteractorLoc, A.Location);
+		const float DistB = b2D ? FVector::Dist2D(InteractorLoc, B.Location) : FVector::Dist(InteractorLoc, B.Location);
 		return DistA < DistB;
 	});
 
 	// Test each marker
-	for (const FGraspMarker& Marker : Markers)
+	for (const FGraspInteractPoint& Point : InteractPoints)
 	{
 		// Check if within distance
-		if (!IsInteractableWithinDistance(Marker.GetLocation(), InteractorLoc, Data->MaxGraspDistance))
+		if (!IsInteractableWithinDistance(Point.Location, InteractorLoc, Data->MaxGraspDistance))
 		{
 			// Check if highlight is enabled and within distance
-			if (Data->MaxHighlightDistance > 0.f && IsInteractableWithinDistance(Marker.GetLocation(), InteractorLoc, Data->MaxHighlightDistance))
+			if (Data->MaxHighlightDistance > 0.f &&
+				IsInteractableWithinDistance(Point.Location, InteractorLoc, Data->MaxHighlightDistance))
 			{
-				NormalizedHighlightDistance = FMath::Clamp(FVector::Dist2D(Marker.GetLocation(), InteractorLoc) / Data->MaxHighlightDistance, 0.f, 1.f);
-				BestMarker = Marker;
+				NormalizedHighlightDistance = FMath::Clamp(
+					FVector::Dist2D(Point.Location, InteractorLoc) / Data->MaxHighlightDistance, 0.f, 1.f);
+
+				// Output the best marker
+				BestMarker = Point;
 
 				// We sorted by distance, if this one is too far, the rest are too
 				return EGraspInteractQuery::Highlight;
@@ -269,33 +273,56 @@ EGraspInteractQuery UGraspStatics::CanInteractWith(const AActor* Interactor, UGr
 			return EGraspInteractQuery::None;
 		}
 
-		const float DistNormalized = b2D ? FVector::Dist2D(Marker.GetLocation(), InteractorLoc) :
-			FVector::Dist(Marker.GetLocation(), InteractorLoc);
+		const float DistNormalized = b2D ? FVector::Dist2D(Point.Location, InteractorLoc) :
+			FVector::Dist(Point.Location, InteractorLoc);
 		NormalizedDistance = FMath::Clamp(DistNormalized / Data->MaxGraspDistance, 0.f, 1.f);
 
 		// Check if within angle
-		if (!IsInteractableWithinAngle(Marker.GetLocation(), InteractorLoc,
-			Interactor->GetActorForwardVector(), Data->MaxGraspAngle))
+		if (!IsInteractableWithinAngle(Point.Location, InteractorLoc, Point.Forward,
+			Data->MaxGraspAngle))
 		{
 			return EGraspInteractQuery::None;
 		}
 		
-		NormalizedAngleDiff = FMath::Clamp(FVector::Dist2D(Marker.GetLocation(), InteractorLoc) / Data->MaxGraspAngle, 0.f, 1.f);
+		NormalizedAngleDiff = FMath::Clamp(
+			FVector::Dist2D(Point.Location, InteractorLoc) / Data->MaxGraspAngle, 0.f, 1.f);
 
 		// Check if within height
-		if (!IsInteractableWithinHeight(Marker.GetLocation(), InteractorLoc, Data->MaxHeightAbove, Data->MaxHeightBelow))
+		if (!IsInteractableWithinHeight(Point.Location, InteractorLoc, Data->MaxHeightAbove, Data->MaxHeightBelow))
 		{
 			return EGraspInteractQuery::None;
 		}
 
-		BestMarker = Marker;
+		BestMarker = Point;
 		return EGraspInteractQuery::Interact;
 	}
 
 	return EGraspInteractQuery::None;
 }
 
-FTransform UGraspStatics::GetGraspMarkerWorldTransform(const FGraspMarker& Marker)
+TArray<FGraspInteractPoint> UGraspStatics::GetGraspInteractPoints(const TArray<UGraspInteractComponent*>& Components)
 {
-	return Marker.GetTransform();
+	TArray<FGraspInteractPoint> InteractPoints;
+	if (Components.Num() > 0)
+	{
+		for (const UGraspInteractComponent* Component : Components)
+		{
+			InteractPoints.Add({ Component });
+		}
+	}
+	return InteractPoints;
+}
+
+TArray<FGraspInteractPoint> UGraspStatics::GetGraspSimpleInteractPoints(
+	const TArray<USceneComponent*>& Components)
+{
+	TArray<FGraspInteractPoint> InteractPoints;
+	if (Components.Num() > 0)
+	{
+		for (const USceneComponent* Component : Components)
+		{
+			InteractPoints.Add({ Component });
+		}
+	}
+	return InteractPoints;
 }

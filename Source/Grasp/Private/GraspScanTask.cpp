@@ -409,9 +409,15 @@ void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FG
 				}
 #endif
 
-				// Retrieve the ability data and markers
-				UGraspData* GraspData = IGraspInteractable::Execute_GetGraspData(HitActor);
-				TArray<FGraspMarker> MarkerCache = IGraspInteractable::Execute_GetInteractMarkers(HitActor);
+				// Retrieve the ability data and interaction points
+				TArray<FGraspInteractPoint> InteractPoints;
+				UGraspData* GraspData = IGraspInteractable::Execute_GetGraspData(HitActor, InteractPoints);
+
+				// Form the array of interaction points from the hit actor instead
+				if (InteractPoints.Num() == 0)
+				{
+					InteractPoints.Add({ HitActor->GetRootComponent() });
+				}
 
 				// Calculate the normalized distance
 				const float GraspAbilityRadius = Hit.Distance;  // Targeting output the GraspAbilityRadius as Distance
@@ -421,7 +427,7 @@ void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FG
 				const float NormalizedDistance = Hit.Distance / GraspAbilityRadius;
 
 				// Add the result to the array
-				FGraspScanResult Result = { InteractTag, HitActor, GraspData, MarkerCache, NormalizedDistance };
+				FGraspScanResult Result = { InteractTag, HitActor, GraspData, InteractPoints, NormalizedDistance };
 				ScanResults.Add(Result);
 			}
 		}

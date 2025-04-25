@@ -61,25 +61,25 @@ public:
 	 * Check if the TargetLocation is within the angle of the FacingVector
 	 * @param SourceLocation The location of the source
 	 * @param TargetLocation The location of the target
-	 * @param FacingVector The facing vector of the source
+	 * @param Forward The facing vector of the target
 	 * @param Degrees The angle in degrees
 	 * @param bCheck2D If true, only the X and Y components of the vectors will be used
 	 * @param bHalfCircle If true, the angle will be halved (i.e. 360 degrees becomes 180 degrees)
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static bool IsWithinInteractAngle(const FVector& SourceLocation, const FVector& TargetLocation,
-		const FVector& FacingVector, float Degrees, bool bCheck2D = true, bool bHalfCircle = false);
+		const FVector& Forward, float Degrees, bool bCheck2D = true, bool bHalfCircle = false);
 
 	/** 
 	 * Check if the Interactor is within the angle of the Interactable
 	 * @param InteractableLocation The location of the interactable
 	 * @param InteractorLocation The location of the interactor
-	 * @param InteractorFacingVector The facing vector of the interactor
+	 * @param Forward The facing vector of the interactable
 	 * @param Degrees The angle in degrees
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static bool IsInteractableWithinAngle(const FVector& InteractableLocation, const FVector& InteractorLocation,
-		const FVector& InteractorFacingVector, float Degrees);
+		const FVector& Forward, float Degrees);
 
 	/** 
 	 * Check if the Interactor is within the angle of the Interactable
@@ -143,10 +143,22 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static EGraspInteractQuery CanInteractWith(const AActor* Interactor, UGraspData* GraspData,
-		UPARAM(ref)TArray<FGraspMarker>& Markers, float& NormalizedAngleDiff, float& NormalizedDistance,
-		float& NormalizedHighlightDistance, FGraspMarker& BestMarker);
+		UPARAM(ref)TArray<FGraspInteractPoint>& InteractPoints, float& NormalizedAngleDiff, float& NormalizedDistance,
+		float& NormalizedHighlightDistance, FGraspInteractPoint& BestMarker);
 
-	/** Convenience getter for blueprint debugging -- used for the development of Grasp */
-	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(Keywords="debug"))
-	static FTransform GetGraspMarkerWorldTransform(const FGraspMarker& Marker);
+	/** 
+	 * Get the GraspInteractPoints for the given Interaction Components
+	 * @param Components The components to get the interact points
+	 * @return The array of GraspInteractPoints
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static TArray<FGraspInteractPoint> GetGraspInteractPoints(const TArray<UGraspInteractComponent*>& Components);
+	
+	/** 
+	 * Get the GraspInteractPoints for the given SceneComponents
+	 * @param Components The components to get the interact points
+	 * @return The array of GraspInteractPoints
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static TArray<FGraspInteractPoint> GetGraspSimpleInteractPoints(const TArray<USceneComponent*>& Components);
 };
