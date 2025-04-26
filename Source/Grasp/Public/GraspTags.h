@@ -7,4 +7,5 @@
 namespace FGraspTags
 {
 	GRASP_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Grasp_Interact);
+	GRASP_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Grasp_Interact_Activate);
 }

@@ -6,6 +6,7 @@
 
 #include "Graspable.generated.h"
 
+struct FGameplayAbilityTargetData;
 class UGraspData;
 
 UINTERFACE()
@@ -33,6 +34,15 @@ public:
 	 */
 	virtual const UGraspData* GetGraspData() const PURE_VIRTUAL(, return nullptr;);
 
+	/** 
+	 * Optional additional target data that will be passed to the ability when the graspable is interacted with.
+	 * @return The optional target data for this graspable.
+	 */
+	virtual TArray<FGameplayAbilityTargetData*> GatherOptionalGraspTargetData() const
+	{
+		return {};
+	}
+	
 	/**
 	 * Dead graspables have their abilities removed from the Pawn that they were granted to.
 	 * 

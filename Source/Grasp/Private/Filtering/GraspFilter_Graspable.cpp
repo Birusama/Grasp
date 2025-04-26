@@ -1,21 +1,21 @@
 ﻿// Copyright (c) Jared Taylor
 
 
-#include "Filtering/GraspFilter.h"
+#include "Filtering/GraspFilter_Graspable.h"
 
 #include "Graspable.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(GraspFilter)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(GraspFilter_Graspable)
 
 
-UGraspFilter::UGraspFilter(const FObjectInitializer& ObjectInitializer)
+UGraspFilter_Graspable::UGraspFilter_Graspable(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {}
 
-bool UGraspFilter::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle,
+bool UGraspFilter_Graspable::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle,
 	const FTargetingDefaultResultData& TargetData) const
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(GraspFilter_Interface::ShouldFilterTarget);
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspFilter_Graspable::ShouldFilterTarget);
 
 	const AActor* TargetActor = TargetData.HitResult.GetActor();
 
@@ -52,5 +52,5 @@ bool UGraspFilter::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHa
 		return true;
 	}
 	
-	return true;
+	return false;
 }

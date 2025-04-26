@@ -10,6 +10,7 @@
 #include "Types/TargetingSystemTypes.h"
 #include "GraspComponent.generated.h"
 
+struct FGameplayAbilityActorInfo;
 class UGameplayAbility;
 struct FGameplayAbilitySpecHandle;
 class UAbilitySystemComponent;
@@ -104,15 +105,20 @@ protected:
 	TMap<TSubclassOf<UGameplayAbility>, FGraspAbilityData> AbilityData;
 
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
+
+public:
+	UAbilitySystemComponent* GetASC() { return ASC.IsValid() ? ASC.Get() : nullptr; }
+	const UAbilitySystemComponent* GetASC() const { return ASC.IsValid() ? ASC.Get() : nullptr; }
 	
 public:
 	UGraspComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	/**
-	 * Call once your Pawn is possessed to initialize Grasp
+	 * Call when your Pawn receives a controller
+	 * Must be called on both authority and local client
 	 * Providing ScanAbility is optional, without it there will be no scanning and only common grasp abilities will be used
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category=Grasp)
+	UFUNCTION(BlueprintCallable, Category=Grasp)
 	void InitializeGrasp(UAbilitySystemComponent* InAbilitySystemComponent, TSubclassOf<UGameplayAbility> ScanAbility);
 	
 	/**
@@ -140,6 +146,8 @@ public:
 	 */
 	virtual const TSubclassOf<UGameplayAbility>& GetGraspAbility(const UGraspData* Data) const;
 
+	const FGraspAbilityData* GetGraspAbilityData(const TSubclassOf<UGameplayAbility>& Ability) const;
+	
 public:
 	/** Rebind the OnPossessedPawnChanged binding if the requirement changes */
 	void UpdatePawnChangedBinding();
@@ -161,10 +169,22 @@ public:
 	void GraspTargetsReady(const TArray<FGraspScanResult>& Results);
 
 	/** Extension point called after giving grasp ability */
-	virtual void PostGiveGraspAbility(const TSubclassOf<UGameplayAbility>& Ability, FGraspAbilityData& InAbilityData) {}
+	virtual void PostGiveGraspAbility(const TSubclassOf<UGameplayAbility>& InAbility, FGraspAbilityData& InAbilityData) {}
 
 	/** Extension point called before clearing grasp ability */
-	virtual void PreClearGraspAbility(const TSubclassOf<UGameplayAbility>& Ability, FGraspAbilityData& InAbilityData) {}
+	virtual void PreClearGraspAbility(const TSubclassOf<UGameplayAbility>& InAbility, FGraspAbilityData& InAbilityData) {}
+
+	/** Extension point called before trying to activate the grasp ability */
+	virtual void PreTryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec) {}
+
+	/** Extension point called after successfully activating the grasp ability */
+	virtual void PostActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo = nullptr) {}
+
+	/** Extension point called after failing to activate the grasp ability */
+	virtual void PostFailedActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo = nullptr) {}
 	
 	/** Pause or resume Grasp */
 	UFUNCTION(BlueprintCallable, Category=Grasp)

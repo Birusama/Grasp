@@ -8,6 +8,8 @@
 
 #include "GraspStatics.generated.h"
 
+struct FGameplayEventData;
+class UAbilitySystemComponent;
 class UGraspComponent;
 struct FScalableFloat;
 
@@ -20,14 +22,61 @@ class GRASP_API UGraspStatics : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	static FGameplayAbilitySpec* FindGraspAbilitySpec(const UAbilitySystemComponent* ASC, const UPrimitiveComponent* GraspableComponent);
+
 	/**
-	 * Attempts to find a Grasp Component for the given Actor
-	 * Must be Pawn, Controller, or PlayerState or will return nullptr
-	 * Will return nullptr on SimulatedProxy
+	 * Required prior to CanGraspActivateAbility() or TryActivateGraspAbility()
+	 * if checking ShouldAbilityRespondToEvent() or ActivateAbilityFromEvent()
+	 *
+	 * Payload will only be prepared if bAlwaysTriggerEvent is true or IGraspable::GatherOptionalGraspTargetData() returns any target data
+	 * 
+	 * @return True if a Payload was prepared, true if IGraspable::GatherOptionalGraspTargetData() returns any target data
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
-	static UGraspComponent* FindGraspComponentForActor(AActor* Actor);
+	static bool PrepareGraspAbilityDataPayload(const UPrimitiveComponent* GraspableComponent,
+		FGameplayEventData& Payload, EGraspAbilityComponentSource Source = EGraspAbilityComponentSource::EventData);
+
+	/** 
+	 * Check CanActivateAbility()
+	 * Optionally check ShouldAbilityRespondToEvent() if we have valid target data and bCheckTargetData is true
+	 * bCheckTargetData will be ignored unless UGraspDeveloper::AbilityActivationHandling is set to Full
+	 * @return True if the ability can be activated
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static bool CanGraspActivateAbility(const AActor* SourceActor, const UPrimitiveComponent* GraspableComponent,
+		EGraspAbilityComponentSource Source = EGraspAbilityComponentSource::EventData);
+
+	/**
+	 * Use instead of TryActivateAbility, will set the SourceObject to the GraspableComponent
+	 * Optionally gathers target data from IGraspable::GatherOptionalGraspTargetData() and sends it to the ability
+	 * Use bAlwaysTriggerEvent if you want to check ShouldAbilityRespondToEvent() even if the target data is empty
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static bool TryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+		EGraspAbilityComponentSource Source = EGraspAbilityComponentSource::EventData);
+
+	static UObject* GetGraspSourceObject(const UGameplayAbility* Ability);
+	static const UObject* GetGraspObjectFromPayload(const FGameplayEventData& Payload);
 	
+	/**
+	 * Retrieve the graspable component from the ability and payload if its available ( ShouldAbilityRespondToEvent() and ActivateAbilityFromEvent() )
+	 */
+	template<typename T>
+	static T* GetGraspableComponent(const UGameplayAbility* Ability, const FGameplayEventData& Payload);
+
+	/**
+	 * Retrieve the graspable component from the ability and payload if its available ( ShouldAbilityRespondToEvent() and ActivateAbilityFromEvent() )
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(DefaultToSelf="Ability", DeterminesOutputType="ComponentType", DisplayName="Get Graspable Component"))
+	static const UPrimitiveComponent* K2_GetGraspableComponent(const UGameplayAbility* Ability,
+		FGameplayEventData MaybePayload, TSubclassOf<UPrimitiveComponent> ComponentType);
+	
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static UAbilitySystemComponent* GraspFindAbilitySystemComponentForActor(const AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static UGraspComponent* FindGraspComponentForActor(const AActor* Actor);
+
 	/**
 	 * Attempts to find a Grasp Component for the given Pawn
 	 * Will return nullptr on SimulatedProxy
@@ -142,6 +191,22 @@ public:
 		float MaxHeightAbove, float MaxHeightBelow);
 	
 	UFUNCTION(BlueprintCallable, Category=Grasp)
-	static EGraspQueryResult CanInteractWith(const AActor* Interactor, UPrimitiveComponent* Graspable,
+	static EGraspQueryResult CanInteractWith(const AActor* Interactor, const UPrimitiveComponent* Graspable,
 		float& NormalizedAngleDiff, float& NormalizedDistance, float& NormalizedHighlightDistance);
 };
+
+template <typename T>
+T* UGraspStatics::GetGraspableComponent(const UGameplayAbility* Ability, const FGameplayEventData& Payload)
+{
+	if (const UObject* Obj = GetGraspObjectFromPayload(Payload))
+	{
+		return Cast<T>(Obj);
+	}
+
+	if (UObject* Source = GetGraspSourceObject(Ability))
+	{
+		return Cast<T>(Source);
+	}
+
+	return nullptr;
+}

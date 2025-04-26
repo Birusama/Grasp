@@ -7,6 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "GraspTypes.generated.h"
 
+class UAbilitySystemComponent;
+struct FGameplayAbilitySpec;
 class IGraspable;
 class UGameplayAbility;
 class UGraspData;
@@ -25,6 +27,9 @@ enum class EGraspTargetingSource : uint8
 	Controller					UMETA(ToolTip="Use the Controller as the targeting source"),
 };
 
+/**
+ * Query what an interactor can do with a graspable component
+ */
 UENUM(BlueprintType)
 enum class EGraspQueryResult : uint8
 {
@@ -33,12 +38,28 @@ enum class EGraspQueryResult : uint8
 	Interact		UMETA(ToolTip="Can interact"),
 };
 
+/**
+ * Focus handling for the Grasp system
+ * Not implemented by default but common enough that it should be here
+ */
 UENUM(BlueprintType)
 enum class EGraspFocusMode : uint8
 {
 	None 			UMETA(ToolTip="Does not require focus to interact"),
 	Focus			UMETA(ToolTip="Requires focus to interact"),
 	FocusAlways		UMETA(ToolTip="Requires focus to interact and ability will end if focus is lost"),
+};
+
+/**
+ * How Grasp abilities retrieve their GraspableComponent
+ * Determine what checks are done from the ability
+ */
+UENUM(BlueprintType)
+enum class EGraspAbilityComponentSource : uint8
+{
+	EventData		UMETA(ToolTip="Send the GraspableComponent along with the event data. Results in ShouldAbilityRespondToEvent() and ActivateAbilityFromEvent()"),
+	Automatic		UMETA(ToolTip="Send EventData if GraspableComponent has optional target data. @see IGraspable::GatherOptionalGraspTargetData()"),
+	Custom			UMETA(ToolTip="Unimplemented -- use a focus system or similar to determine which GraspableComponent we're interacting with. Results in ActivateAbility()"),
 };
 
 /**

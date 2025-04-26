@@ -30,7 +30,7 @@ UGraspComponent::UGraspComponent(const FObjectInitializer& ObjectInitializer)
 
 void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemComponent, TSubclassOf<UGameplayAbility> ScanAbility)
 {
-	if (IsValid(GetOwner()) && GetOwner()->HasAuthority())
+	if (IsValid(GetOwner()))
 	{
 		// Cache the ability system component
 		ASC = InAbilitySystemComponent;
@@ -51,48 +51,51 @@ void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemCo
 		// Cache the owning controller
 		Controller = Cast<AController>(GetOwner());
 
-		// Pre-grant common grasp abilities
-		for (const TSubclassOf<UGameplayAbility>& Ability : CommonGraspAbilities)
+		if (GetOwner()->HasAuthority())
 		{
-			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
-				INDEX_NONE, this));
-			
-			if (ensure(Handle.IsValid()))
+			// Pre-grant common grasp abilities
+			for (const TSubclassOf<UGameplayAbility>& Ability : CommonGraspAbilities)
 			{
-				FGraspAbilityData& Data = AbilityData.FindOrAdd(Ability);
-				Data.Handle = Handle;
-				Data.Ability = Ability;
-				Data.bPersistent = true;  // Don't allow this to be removed
+				FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
+					INDEX_NONE, this));
+			
+				if (ensure(Handle.IsValid()))
+				{
+					FGraspAbilityData& Data = AbilityData.FindOrAdd(Ability);
+					Data.Handle = Handle;
+					Data.Ability = Ability;
+					Data.bPersistent = true;  // Don't allow this to be removed
 
-				// Extension point
-				PostGiveGraspAbility(Ability, Data);
+					// Extension point
+					PostGiveGraspAbility(Ability, Data);
+				}
 			}
-		}
 		
-		// End the scan ability if it is already active
-		if (ScanAbilityHandle.IsValid())
-		{
-			ASC->ClearAbility(ScanAbilityHandle);
-			ScanAbilityHandle = FGameplayAbilitySpecHandle();
+			// End the scan ability if it is already active
+			if (ScanAbilityHandle.IsValid())
+			{
+				ASC->ClearAbility(ScanAbilityHandle);
+				ScanAbilityHandle = FGameplayAbilitySpecHandle();
+			}
+
+			// Grant the scan ability if provided
+			if (ScanAbility)
+			{
+				ScanAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(ScanAbility, 1, INDEX_NONE, this));
+			}
+
+			// Cache the preset update mode to detect changed
+			bLastUpdateTargetingPresetsOnPawnChange = bUpdateTargetingPresetsOnPawnChange;
+
+			// Get the targeting presets
+			if (ScanAbilityHandle.IsValid())
+			{
+				CurrentTargetingPresets = GetTargetingPresets();
+			}
+
+			// Bind the pawn changed event if required
+			UpdatePawnChangedBinding();
 		}
-
-		// Grant the scan ability if provided
-		if (ScanAbility)
-		{
-			ScanAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(ScanAbility, 1, INDEX_NONE, this));
-		}
-
-		// Cache the preset update mode to detect changed
-		bLastUpdateTargetingPresetsOnPawnChange = bUpdateTargetingPresetsOnPawnChange;
-
-		// Get the targeting presets
-		if (ScanAbilityHandle.IsValid())
-		{
-			CurrentTargetingPresets = GetTargetingPresets();
-		}
-
-		// Bind the pawn changed event if required
-		UpdatePawnChangedBinding();
 	}
 }
 
@@ -124,6 +127,11 @@ TMap<FGameplayTag, UTargetingPreset*> UGraspComponent::GetTargetingPresets_Imple
 const TSubclassOf<UGameplayAbility>& UGraspComponent::GetGraspAbility(const UGraspData* Data) const
 {
 	return Data->GraspAbility;
+}
+
+const FGraspAbilityData* UGraspComponent::GetGraspAbilityData(const TSubclassOf<UGameplayAbility>& Ability) const
+{
+	return AbilityData.Find(Ability);
 }
 
 void UGraspComponent::UpdatePawnChangedBinding()
@@ -338,8 +346,8 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 			*GetRoleString(), *Ability->GetName(), *Result.Graspable->GetName());
 
 		// Grant the ability
-		FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
-			INDEX_NONE, this));
+		FGameplayAbilitySpec Spec = FGameplayAbilitySpec(Ability, 1, INDEX_NONE, this);
+		FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
 		
 		// Add it to our data
 		if (Handle.IsValid())

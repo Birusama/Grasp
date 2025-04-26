@@ -30,6 +30,8 @@ public:
 		, MaxHeightAbove(30.f)
 		, MaxHeightBelow(30.f)
 		, NormalizedGrantAbilityDistance(0.7f)
+		, AuthNetToleranceAngleScalar(1.1f)
+		, AuthNetToleranceDistanceScalar(1.1f)
 		, bGrantAbilityDistance2D(false)
 		, bGraspDistance2D(false)
 	{}
@@ -82,6 +84,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp, meta=(UIMin="0", ClampMin="0", UIMax="1", ClampMax="1", Delta="0.05", ForceUnits="Percent"))
 	float NormalizedGrantAbilityDistance;
 
+	/**
+	 * Distance will effectively be increased by this amount on server authority for angle checks
+	 * This allows potentially minor discrepancies in distance checks to be ignored for ability activation
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp, meta=(UIMin="1", ClampMin="1", UIMax="2", Delta="0.05", ForceUnits="x"))
+	float AuthNetToleranceAngleScalar;
+
+	/**
+	 * Distance will effectively be increased by this amount on server authority for distance checks
+	 * This allows potentially minor discrepancies in distance checks to be ignored for ability activation
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp, meta=(UIMin="1", ClampMin="1", UIMax="2", Delta="0.05", ForceUnits="x"))
+	float AuthNetToleranceDistanceScalar;
+	
 	/**
 	 * Use 2D distance checks for granting the ability
 	 */
