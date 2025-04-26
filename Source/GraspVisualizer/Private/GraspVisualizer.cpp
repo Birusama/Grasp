@@ -24,6 +24,11 @@ void FGraspVisualizerModule::StartupModule()
 
 void FGraspVisualizerModule::ShutdownModule()
 {
+	GUnrealEd->UnregisterComponentVisualizer(UGraspableBoxComponent::StaticClass()->GetFName());
+	GUnrealEd->UnregisterComponentVisualizer(UGraspableCapsuleComponent::StaticClass()->GetFName());
+	GUnrealEd->UnregisterComponentVisualizer(UGraspableSkeletalMeshComponent::StaticClass()->GetFName());
+	GUnrealEd->UnregisterComponentVisualizer(UGraspableSphereComponent::StaticClass()->GetFName());
+	GUnrealEd->UnregisterComponentVisualizer(UGraspableStaticMeshComponent::StaticClass()->GetFName());
 }
 
 #undef LOCTEXT_NAMESPACE

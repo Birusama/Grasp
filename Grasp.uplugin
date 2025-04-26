@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0.0",
 	"FriendlyName": "Grasp",
-	"Description": "Interaction - robust, data-driven, with optional network prediction.",
+	"Description": "Interaction - robust, data-driven, with full network prediction. Pair me with Vigil and Doors for a full experience.",
 	"Category": "Gameplay",
 	"CreatedBy": "Jared Taylor (Vaei)",
 	"CreatedByURL": "https://vaei.github.io/",
@@ -18,11 +18,6 @@
 			"Name": "Grasp",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault"
-		},
-		{
-			"Name": "GraspEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
 		},
 		{
 			"Name": "GraspVisualizer",
