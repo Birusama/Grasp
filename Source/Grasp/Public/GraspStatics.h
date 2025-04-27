@@ -70,6 +70,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(DefaultToSelf="Ability", DeterminesOutputType="ComponentType", DisplayName="Get Graspable Component"))
 	static const UPrimitiveComponent* K2_GetGraspableComponent(const UGameplayAbility* Ability,
 		FGameplayEventData MaybePayload, TSubclassOf<UPrimitiveComponent> ComponentType);
+
+	/**
+	 * Retrieve the graspable primitive component from the ability and payload if its available ( ShouldAbilityRespondToEvent() and ActivateAbilityFromEvent() )
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(DefaultToSelf="Ability", DeterminesOutputType="ComponentType", DisplayName="Get Graspable Primitive"))
+	static const UPrimitiveComponent* K2_GetGraspablePrimitive(const UGameplayAbility* Ability,
+		FGameplayEventData MaybePayload);
 	
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static UAbilitySystemComponent* GraspFindAbilitySystemComponentForActor(const AActor* Actor);
@@ -98,6 +105,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static UGraspComponent* FindGraspComponentForPlayerState(APlayerState* PlayerState);
 
+public:
+	/** Cast the CharacterActor to a character and flush server moves on its movement component */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static void FlushServerMovesForActor(AActor* CharacterActor);
+
+	/** Flush server moves on the movement component */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static void FlushServerMoves(ACharacter* Character);
+	
 public:
 	// /**
 	//  * Determine if we can interact with the interactable

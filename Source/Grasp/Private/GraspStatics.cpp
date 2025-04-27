@@ -191,6 +191,21 @@ const UPrimitiveComponent* UGraspStatics::K2_GetGraspableComponent(const UGamepl
 	return nullptr;
 }
 
+const UPrimitiveComponent* UGraspStatics::K2_GetGraspablePrimitive(const UGameplayAbility* Ability,
+	FGameplayEventData Payload)
+{
+	const UObject* Object = GetGraspObjectFromPayload(Payload);
+	if (!Object)
+	{
+		Object = GetGraspSourceObject(Ability);
+	}
+	if (Object)
+	{
+		return Cast<UPrimitiveComponent>(Object);
+	}
+	return nullptr;
+}
+
 UAbilitySystemComponent* UGraspStatics::GraspFindAbilitySystemComponentForActor(const AActor* Actor)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GraspFindAbilitySystemComponentForActor);
@@ -329,6 +344,31 @@ UGraspComponent* UGraspStatics::FindGraspComponentForPlayerState(APlayerState* P
 		return Controller->FindComponentByClass<UGraspComponent>();
 	}
 	return nullptr;
+}
+
+void UGraspStatics::FlushServerMovesForActor(AActor* CharacterActor)
+{
+	if (IsValid(CharacterActor))
+	{
+		if (const ACharacter* Character = Cast<ACharacter>(CharacterActor))
+		{
+			if (UCharacterMovementComponent* CharacterMovement = Character->GetCharacterMovement())
+			{
+				CharacterMovement->FlushServerMoves();
+			}
+		}
+	}
+}
+
+void UGraspStatics::FlushServerMoves(ACharacter* Character)
+{
+	if (IsValid(Character))
+	{
+		if (UCharacterMovementComponent* CharacterMovement = Character->GetCharacterMovement())
+		{
+			CharacterMovement->FlushServerMoves();
+		}
+	}
 }
 
 bool UGraspStatics::IsWithinInteractAngle(const FVector& SourceLocation, const FVector& TargetLocation, const FVector& Forward, float Degrees, bool bCheck2D, bool
