@@ -8,7 +8,7 @@
 > **Gameplay Interaction System**
 > <br>Full Net Prediction
 > <br>Pairs with the [Vigil](https://github.com/Vaei/Vigil) Focusing System
-> <br>And its **Free!**
+> <br>And its **FREE!**
 
 > [!WARNING]
 > Use `git clone` instead of downloading as a zip, or you will not receive content
