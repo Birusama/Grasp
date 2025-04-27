@@ -297,10 +297,10 @@ void UGraspScanTask::RequestGrasp()
 		FTargetingAsyncTaskData& AsyncTaskData = FTargetingAsyncTaskData::FindOrAdd(Handle);
 		AsyncTaskData.bReleaseOnCompletion = true;
 
+		bAwaitingCallback = true;
+
 		TargetSubsystem->StartAsyncTargetingRequestWithHandle(Handle,
 			FTargetingRequestDelegate::CreateUObject(this, &ThisClass::OnGraspComplete, Tag));
-
-		bAwaitingCallback = true;
 
 		if (FGraspCVars::bLogVeryVerboseScanRequest)
 		{

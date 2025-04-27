@@ -162,6 +162,10 @@ public:
 	 */
 	void UpdateTargetingPresets();
 
+	void DrawDebugGrantAbilityLine(const UPrimitiveComponent* Component, const FColor& Color) const;
+	void DrawDebugGrantAbilityBox(const UPrimitiveComponent* Component, const FString& Info, const FString& Ability,
+		const FColor& Color) const;
+
 	/**
 	 * Notified by UGraspScanTask that our targets are ready
 	 * Cache the results and notify any listeners
