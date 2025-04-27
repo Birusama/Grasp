@@ -24,6 +24,11 @@ void FGraspVisualizerModule::StartupModule()
 
 void FGraspVisualizerModule::ShutdownModule()
 {
+	if (!UObjectInitialized() || IsEngineExitRequested())
+	{
+		return;
+	}
+	
 	GUnrealEd->UnregisterComponentVisualizer(UGraspableBoxComponent::StaticClass()->GetFName());
 	GUnrealEd->UnregisterComponentVisualizer(UGraspableCapsuleComponent::StaticClass()->GetFName());
 	GUnrealEd->UnregisterComponentVisualizer(UGraspableSkeletalMeshComponent::StaticClass()->GetFName());
