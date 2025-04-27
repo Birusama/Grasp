@@ -36,7 +36,7 @@ protected:
 	/** Rotation to trace from */
 	UPROPERTY(EditAnywhere, Category="Grasp Selection")
 	EGraspTargetRotationSource RotationSource;
-
+	
 	/** Fallback Rotation to trace from if RotationSource could not get a valid direction (e.g. velocity, but we have no velocity) */
 	UPROPERTY(EditAnywhere, Category="Grasp Selection", meta=(EditCondition="RotationSource==EGraspTargetRotationSource::Velocity||RotationSource==EGraspTargetRotationSource::Acceleration", EditConditionHides))
 	TArray<EGraspTargetRotationSource> FallbackRotationSources;
@@ -54,6 +54,10 @@ protected:
 	FRotator DefaultSourceRotationOffset = FRotator::ZeroRotator;
 
 protected:
+	/** If true can successfully overlap multiple components on the same actor */
+	UPROPERTY(EditAnywhere, Category="Grasp Selection")
+	bool bTraceMultipleComponentsPerActor;
+	
 	/** When enabled, the trace will be performed against complex collision. */
 	UPROPERTY(EditAnywhere, Category="Grasp Selection")
 	uint8 bTraceComplex : 1 = false;

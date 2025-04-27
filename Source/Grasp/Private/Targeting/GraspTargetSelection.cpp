@@ -49,12 +49,13 @@ UGraspTargetSelection::UGraspTargetSelection(const FObjectInitializer& ObjectIni
 	bUseRelativeLocationOffset = true;
 	bIgnoreSourceActor = true;
 	bIgnoreInstigatorActor = false;
+	bTraceMultipleComponentsPerActor = true;  // Required for multiple interact components on the same actor
 	bTraceComplex = false;
 
 	LocationSource = EGraspTargetLocationSource::Actor;
 	RotationSource = EGraspTargetRotationSource::Actor;
 	FallbackRotationSources.Add(EGraspTargetRotationSource::Actor);
-
+	
 	MovementSelectionMode = EGraspMovementSelectionMode::Disabled;
 	MovementSelectionAccelBias = 0.2f;  // Primarily from velocity
 
@@ -422,12 +423,15 @@ int32 UGraspTargetSelection::ProcessOverlapResults(const FTargetingRequestHandle
 			}
 
 			bool bAddResult = true;
-			for (const FTargetingDefaultResultData& ResultData : TargetingResults.TargetResults)
+			if (!bTraceMultipleComponentsPerActor)
 			{
-				if (ResultData.HitResult.GetActor() == OverlapResult.GetActor())
+				for (const FTargetingDefaultResultData& ResultData : TargetingResults.TargetResults)
 				{
-					bAddResult = false;
-					break;
+					if (ResultData.HitResult.GetActor() == OverlapResult.GetActor())
+					{
+						bAddResult = false;
+						break;
+					}
 				}
 			}
 
