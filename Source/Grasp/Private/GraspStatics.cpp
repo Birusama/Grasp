@@ -6,16 +6,20 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "Engine/Engine.h"
-#include "DrawDebugHelpers.h"
 #include "Graspable.h"
 #include "GraspComponent.h"
 #include "GraspData.h"
-#include "GraspDeveloper.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
-#include "GameFramework/HUD.h"
 #include "Components/PrimitiveComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Misc/UObjectToken.h"
+
+#if UE_ENABLE_DEBUG_DRAWING
+#include "DrawDebugHelpers.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspStatics)
 
@@ -54,6 +58,27 @@ bool UGraspStatics::PrepareGraspAbilityDataPayload(const UPrimitiveComponent* Gr
 bool UGraspStatics::CanGraspActivateAbility(const AActor* SourceActor, const UPrimitiveComponent* GraspableComponent,
 	EGraspAbilityComponentSource Source)
 {
+	if (!GraspableComponent)
+	{
+		return false;
+	}
+
+	// Is this a graspable component?
+	if (!GraspableComponent->Implements<UGraspable>())
+	{
+		UE_LOG(LogGrasp, Error, TEXT("CanGraspActivateAbility: Attempting to interact with an invalid component: %s belonging to %s"),
+			*GetNameSafe(GraspableComponent), *GetNameSafe(SourceActor));
+
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(GraspableComponent))
+			->AddToken(FUObjectToken::Create(GraspableComponent->GetOwner()->GetClass()))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("Invalid Setup: Attempting to interact with an invalid component"))));
+#endif
+		
+		return false;
+	}
+	
 	// Find the GraspComponent from the SourceActor
 	const UGraspComponent* GraspComponent = FindGraspComponentForActor(SourceActor);
 	if (!GraspComponent)
