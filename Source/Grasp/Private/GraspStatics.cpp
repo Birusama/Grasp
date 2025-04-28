@@ -396,19 +396,247 @@ void UGraspStatics::FlushServerMoves(ACharacter* Character)
 	}
 }
 
-bool UGraspStatics::IsWithinInteractAngle(const FVector& SourceLocation, const FVector& TargetLocation, const FVector& Forward, float Degrees, bool bCheck2D, bool
+EGraspCardinal_4Way UGraspStatics::GetCardinalDirectionFromAngle_4Way(float Angle)
+{
+	const float AngleAbs = FMath::Abs(Angle);
+
+	// Forward
+	if (AngleAbs <= 45.f)
+	{
+		return EGraspCardinal_4Way::Forward;
+	}
+
+	// Backward
+	if (AngleAbs >= 135.f)
+	{
+		return EGraspCardinal_4Way::Backward;
+	}
+
+	// Right
+	if (Angle > 0.f)
+	{
+		return EGraspCardinal_4Way::Right;
+	}
+
+	// Left
+	return EGraspCardinal_4Way::Left;
+}
+
+EGraspCardinal_8Way UGraspStatics::GetCardinalDirectionFromAngle_8Way(float Angle)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetCardinalDirectionFromAngle_8Way);
+	
+	const float AngleAbs = FMath::Abs(Angle);
+
+	// Forward
+	if (AngleAbs <= 22.5f)
+	{
+		return EGraspCardinal_8Way::Forward;
+	}
+
+	// Backward
+	if (AngleAbs >= 157.5f)
+	{
+		return EGraspCardinal_8Way::Backward;
+	}
+
+	// Diagonal Fwd
+	if (AngleAbs <= 67.5f)
+	{
+		return Angle > 0.f ? EGraspCardinal_8Way::ForwardRight : EGraspCardinal_8Way::ForwardLeft;
+	}
+
+	// Diagonal Bwd
+	if (AngleAbs >= 112.5f)
+	{
+		return Angle > 0.f ? EGraspCardinal_8Way::BackwardRight : EGraspCardinal_8Way::BackwardLeft;
+	}
+
+	// Right
+	if (Angle > 0.f)
+	{
+		return EGraspCardinal_8Way::Right;
+	}
+
+	// Left
+	return EGraspCardinal_8Way::Left;
+}
+
+float UGraspStatics::CalculateCardinalAngle(const FVector& Direction, const FRotator& SourceRotation)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CalculateCardinalAngle);
+	
+	// Copied from UKismetAnimationLibrary::CalculateDirection
+	
+	if (!Direction.IsNearlyZero())
+	{
+		const FMatrix RotMatrix = FRotationMatrix(SourceRotation);
+		const FVector ForwardVector = RotMatrix.GetScaledAxis(EAxis::X);
+		const FVector RightVector = RotMatrix.GetScaledAxis(EAxis::Y);
+		const FVector Normalize = Direction.GetSafeNormal2D();
+
+		// get a cos(alpha) of forward vector vs velocity
+		const float ForwardCosAngle = static_cast<float>(FVector::DotProduct(ForwardVector, Normalize));
+		// now get the alpha and convert to degree
+		float ForwardDeltaDegree = FMath::RadiansToDegrees(FMath::Acos(ForwardCosAngle));
+
+		// depending on where right vector is, flip it
+		const float RightCosAngle = static_cast<float>(FVector::DotProduct(RightVector, Normalize));
+		if (RightCosAngle < 0.f)
+		{
+			ForwardDeltaDegree *= -1.f;
+		}
+
+		return ForwardDeltaDegree;
+	}
+
+	return 0.f;
+}
+
+EGraspCardinal_4Way UGraspStatics::CalculateCardinalDirection_4Way(const FVector& SourceLocation,
+	const FRotator& SourceRotation,	const FVector& TargetLocation)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CalculateCardinalDirection_4Way);
+	
+	const FVector Direction = TargetLocation - SourceLocation;
+	const float Angle = CalculateCardinalAngle(Direction, SourceRotation);
+	return GetCardinalDirectionFromAngle_4Way(Angle);
+}
+
+EGraspCardinal_8Way UGraspStatics::CalculateCardinalDirection_8Way(const FVector& SourceLocation,
+	const FRotator& SourceRotation,	const FVector& TargetLocation)
+{ 
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CalculateCardinalDirection_8Way);
+	
+	const FVector Direction = TargetLocation - SourceLocation;
+	const float Angle = CalculateCardinalAngle(Direction, SourceRotation);
+	return GetCardinalDirectionFromAngle_8Way(Angle);
+}
+
+EGraspCardinal_4Way UGraspStatics::GetOppositeCardinalDirection_4Way(EGraspCardinal_4Way Cardinal)
+{
+	switch (Cardinal)
+	{
+	case EGraspCardinal_4Way::Forward: return EGraspCardinal_4Way::Backward;
+	case EGraspCardinal_4Way::Backward: return EGraspCardinal_4Way::Forward;
+	case EGraspCardinal_4Way::Left: return EGraspCardinal_4Way::Right;
+	case EGraspCardinal_4Way::Right: return EGraspCardinal_4Way::Left;
+	default: return Cardinal;
+	}
+}
+
+EGraspCardinal_8Way UGraspStatics::GetOppositeCardinalDirection_8Way(EGraspCardinal_8Way Cardinal)
+{
+	switch (Cardinal)
+	{
+	case EGraspCardinal_8Way::Forward: return EGraspCardinal_8Way::Backward;
+	case EGraspCardinal_8Way::Backward: return EGraspCardinal_8Way::Forward;
+	case EGraspCardinal_8Way::Left: return EGraspCardinal_8Way::Right;
+	case EGraspCardinal_8Way::Right: return EGraspCardinal_8Way::Left;
+	case EGraspCardinal_8Way::ForwardLeft: return EGraspCardinal_8Way::BackwardRight;
+	case EGraspCardinal_8Way::ForwardRight: return EGraspCardinal_8Way::BackwardLeft;
+	case EGraspCardinal_8Way::BackwardLeft: return EGraspCardinal_8Way::ForwardRight;
+	case EGraspCardinal_8Way::BackwardRight: return EGraspCardinal_8Way::ForwardLeft;
+	default: return Cardinal;
+	}
+}
+
+FVector UGraspStatics::GetDirectionFromCardinal_4Way(EGraspCardinal_4Way Cardinal, const FRotator& SourceRotation)
+{
+	return SourceRotation.RotateVector(GetSnappedDirectionFromCardinal_4Way(Cardinal));
+}
+
+FVector UGraspStatics::GetDirectionFromCardinal_8Way(EGraspCardinal_8Way Cardinal, const FRotator& SourceRotation)
+{
+	return SourceRotation.RotateVector(GetSnappedDirectionFromCardinal_8Way(Cardinal));
+}
+
+FVector UGraspStatics::GetSnappedDirectionFromCardinal_4Way(EGraspCardinal_4Way Cardinal)
+{
+	switch (Cardinal)
+	{
+	case EGraspCardinal_4Way::Forward:
+		return FVector(1.f, 0.f, 0.f);
+	case EGraspCardinal_4Way::Backward:
+		return FVector(-1.f, 0.f, 0.f);
+	case EGraspCardinal_4Way::Left:
+		return FVector(0.f, -1.f, 0.f);
+	case EGraspCardinal_4Way::Right:
+		return FVector(0.f, 1.f, 0.f);
+	default:
+		return FVector::ZeroVector;
+	}
+}
+
+FVector UGraspStatics::GetSnappedDirectionFromCardinal_8Way(EGraspCardinal_8Way Cardinal)
+{
+	switch (Cardinal)
+	{
+	case EGraspCardinal_8Way::Forward:
+		return FVector(1.f, 0.f, 0.f);
+	case EGraspCardinal_8Way::Backward:
+		return FVector(-1.f, 0.f, 0.f);
+	case EGraspCardinal_8Way::Left:
+		return FVector(0.f, -1.f, 0.f);
+	case EGraspCardinal_8Way::Right:
+		return FVector(0.f, 1.f, 0.f);
+	case EGraspCardinal_8Way::ForwardLeft:
+		return FVector(1.f, -1.f, 0.f).GetSafeNormal2D();
+	case EGraspCardinal_8Way::ForwardRight:
+		return FVector(1.f, 1.f, 0.f).GetSafeNormal2D();
+	case EGraspCardinal_8Way::BackwardLeft:
+		return FVector(-1.f, -1.f, 0.f).GetSafeNormal2D();
+	case EGraspCardinal_8Way::BackwardRight:
+		return FVector(-1.f, 1.f, 0.f).GetSafeNormal2D();
+	default:
+		return FVector::ZeroVector;
+	}
+}
+
+FVector UGraspStatics::GetDirectionSnappedToCardinal(const FVector& SourceLocation, const FRotator& SourceRotation,
+	const FVector& TargetLocation, EGraspCardinalType CardinalType, bool bFlipDirection)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetDirectionSnappedToCardinal);
+	
+	const FVector Direction = TargetLocation - SourceLocation;
+	const float Angle = CalculateCardinalAngle(Direction, SourceRotation);
+
+	switch (CardinalType)
+	{
+	case EGraspCardinalType::Cardinal_8Way:
+		{
+			EGraspCardinal_8Way Cardinal = GetCardinalDirectionFromAngle_8Way(Angle);
+			if (bFlipDirection)
+			{
+				Cardinal = GetOppositeCardinalDirection_8Way(Cardinal);
+			}
+			return GetDirectionFromCardinal_8Way(Cardinal, SourceRotation);
+		}
+	default:
+		{
+			EGraspCardinal_4Way Cardinal = GetCardinalDirectionFromAngle_4Way(Angle);
+			if (bFlipDirection)
+			{
+				Cardinal = GetOppositeCardinalDirection_4Way(Cardinal);
+			}
+			return GetDirectionFromCardinal_4Way(Cardinal, SourceRotation);
+		}
+	}
+}
+
+bool UGraspStatics::IsWithinInteractAngle(const FVector& InteractorLocation, const FVector& InteractableLocation, const FVector& Forward, float Degrees, bool bCheck2D, bool
 	bHalfCircle)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::IsWithinInteractAngle);
 	
-	const FVector Diff = TargetLocation - SourceLocation;
+	const FVector Diff = InteractableLocation - InteractorLocation;
 	const FVector Dir = bCheck2D ? Diff.GetSafeNormal2D() : Diff.GetSafeNormal();
 	const float Radians = FMath::DegreesToRadians(Degrees * (bHalfCircle ? 1.f : 0.5f));
 	const float Acos = FMath::Acos(Forward | Dir);
 	return Acos <= Radians;
 }
 
-bool UGraspStatics::IsInteractableWithinAngle(const FVector& InteractableLocation, const FVector& InteractorLocation,
+bool UGraspStatics::IsInteractableWithinAngle(const FVector& InteractorLocation, const FVector& InteractableLocation,
 	const FVector& Forward, float Degrees)
 {
 	return IsWithinInteractAngle(InteractorLocation, InteractableLocation,
@@ -425,17 +653,17 @@ bool UGraspStatics::CanInteractWithinAngle(const AActor* Interactor, const FVect
 		Interactor->GetActorForwardVector(), Degrees);
 }
 
-bool UGraspStatics::IsWithinInteractDistance(const FVector& SourceLocation, const FVector& TargetLocation,
+bool UGraspStatics::IsWithinInteractDistance(const FVector& InteractorLocation, const FVector& InteractableLocation,
 	float Distance, bool bCheck2D)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::IsWithinInteractDistance);
 	
 	const float DistSquared = bCheck2D ?
-		FVector::DistSquared2D(SourceLocation, TargetLocation) : FVector::DistSquared(SourceLocation, TargetLocation);
+		FVector::DistSquared2D(InteractorLocation, InteractableLocation) : FVector::DistSquared(InteractorLocation, InteractableLocation);
 	return DistSquared <= FMath::Square(Distance);
 }
 
-bool UGraspStatics::IsInteractableWithinDistance(const FVector& InteractableLocation, const FVector& InteractorLocation,
+bool UGraspStatics::IsInteractableWithinDistance(const FVector& InteractorLocation, const FVector& InteractableLocation,
 	float Distance, bool bCheck2D)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::IsInteractableWithinDistance);
@@ -473,7 +701,7 @@ bool UGraspStatics::CanInteractWithinAngleAndDistance(const AActor* Interactor, 
 	return bWithinAngle && bWithinDistance;
 }
 
-bool UGraspStatics::IsInteractableWithinHeight(const FVector& InteractableLocation, const FVector& InteractorLocation,
+bool UGraspStatics::IsInteractableWithinHeight(const FVector& InteractorLocation, const FVector& InteractableLocation,
 	float MaxHeightAbove, float MaxHeightBelow)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::IsInteractableWithinHeight);

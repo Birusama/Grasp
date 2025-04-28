@@ -62,6 +62,35 @@ enum class EGraspAbilityComponentSource : uint8
 	Custom			UMETA(ToolTip="Unimplemented -- use a focus system or similar to determine which GraspableComponent we're interacting with. Results in ActivateAbility()"),
 };
 
+UENUM(BlueprintType)
+enum class EGraspCardinal_4Way : uint8
+{
+	Forward,
+	Left,
+	Right,
+	Backward,
+};
+
+UENUM(BlueprintType)
+enum class EGraspCardinal_8Way : uint8
+{
+	Forward,
+	ForwardLeft,
+	ForwardRight,
+	Left,
+	Right,
+	Backward,
+	BackwardLeft,
+	BackwardRight,
+};
+
+UENUM(BlueprintType)
+enum class EGraspCardinalType : uint8
+{
+	Cardinal_4Way,
+	Cardinal_8Way,
+};
+
 /**
  * Grasp will scan for interactables to retrieve their data and ability
  */
