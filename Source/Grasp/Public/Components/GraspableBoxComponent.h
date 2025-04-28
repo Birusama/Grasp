@@ -40,7 +40,7 @@ public:
 	 *
 	 * Includes parameters for adjusting the interaction distance, angle, height, etc.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Grasp)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp)
 	TObjectPtr<UGraspData> GraspData;
 
 	/**
