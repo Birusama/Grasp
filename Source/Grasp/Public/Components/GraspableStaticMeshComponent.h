@@ -24,7 +24,7 @@ class GRASP_API UGraspableStaticMeshComponent : public UStaticMeshComponent, pub
 
 public:
 	/* IGraspable */
-	virtual const UGraspData* GetGraspData() const override final { return GraspData;}
+	virtual const UGraspData* GetGraspData() const override final { return GraspData; }
 	virtual bool IsGraspableDead() const override
 	{
 		if (K2_IsGraspableDead()) {	return true; }
