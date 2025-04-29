@@ -23,6 +23,11 @@
 			"Name": "GraspVisualizer",
 			"Type": "EditorNoCommandlet",
 			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "GraspEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
 		}
 	],
 	"Plugins": [
