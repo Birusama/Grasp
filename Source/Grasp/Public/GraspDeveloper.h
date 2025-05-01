@@ -10,7 +10,7 @@
 /**
  * Set defaults for Grasp
  */
-UCLASS(Config=Game)
+UCLASS(Config=Game, meta=(DisplayName="Grasp Developer Settings"))
 class GRASP_API UGraspDeveloper : public UDeveloperSettings
 {
 	GENERATED_BODY()
