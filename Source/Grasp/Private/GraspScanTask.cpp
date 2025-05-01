@@ -45,6 +45,13 @@ namespace FGraspCVars
 
 #define LOCTEXT_NAMESPACE "GraspScanTask"
 
+UGraspScanTask::UGraspScanTask(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bSimulatedTask = false;
+	bTickingTask = false;
+}
+
 UGraspScanTask* UGraspScanTask::GraspScan(UGameplayAbility* OwningAbility, float ErrorWaitDelay)
 {
 	UGraspScanTask* MyObj = NewAbilityTask<UGraspScanTask>(OwningAbility);

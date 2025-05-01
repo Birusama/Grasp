@@ -29,6 +29,8 @@ protected:
 	TOptional<FString> VeryVerboseWaitReason;
 	
 public:
+	UGraspScanTask(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	
 	/**
 	 * Grasp's passive perpetual task that scans for interact targets to grant an ability to, prior to interaction
 	 * @param OwningAbility The ability that owns this task

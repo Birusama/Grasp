@@ -13,6 +13,7 @@ UGraspScanAbility::UGraspScanAbility(const FObjectInitializer& ObjectInitializer
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
+	NetSecurityPolicy = EGameplayAbilityNetSecurityPolicy::ServerOnly;
 	bServerRespectsRemoteAbilityCancellation = false;
 	bRetriggerInstancedAbility = true;
 }
