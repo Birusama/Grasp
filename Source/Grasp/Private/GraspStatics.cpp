@@ -779,20 +779,23 @@ EGraspQueryResult UGraspStatics::CanInteractWith(const AActor* Interactor, const
 	const FVector Forward = Component->GetForwardVector();
 	const UGraspData* Data = Graspable->GetGraspData();
 
+	const float AuthNetToleranceAngleScalar = Data->GetAuthNetToleranceAngleScalar();
+	const float AuthNetToleranceDistanceScalar = Data->GetAuthNetToleranceDistanceScalar();
+	
 	const float Angle = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
-		Data->MaxGraspAngle * Data->AuthNetToleranceAngleScalar : Data->MaxGraspAngle;
+		Data->MaxGraspAngle * AuthNetToleranceAngleScalar : Data->MaxGraspAngle;
 
 	const float Distance = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
-		Data->MaxGraspDistance * Data->AuthNetToleranceDistanceScalar : Data->MaxGraspDistance;
+		Data->MaxGraspDistance * AuthNetToleranceDistanceScalar : Data->MaxGraspDistance;
 
 	const float HighlightDistance = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
-		Data->MaxHighlightDistance * Data->AuthNetToleranceDistanceScalar : Data->MaxHighlightDistance;
+		Data->MaxHighlightDistance * AuthNetToleranceDistanceScalar : Data->MaxHighlightDistance;
 
 	const float MaxHeightAbove = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
-		Data->MaxHeightAbove * Data->AuthNetToleranceDistanceScalar : Data->MaxHeightAbove;
+		Data->MaxHeightAbove * AuthNetToleranceDistanceScalar : Data->MaxHeightAbove;
 
 	const float MaxHeightBelow = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
-		Data->MaxHeightBelow * Data->AuthNetToleranceDistanceScalar : Data->MaxHeightBelow;
+		Data->MaxHeightBelow * AuthNetToleranceDistanceScalar : Data->MaxHeightBelow;
 	
 	// Check if within distance
 	if (!IsInteractableWithinDistance(Location, InteractorLocation, Distance))

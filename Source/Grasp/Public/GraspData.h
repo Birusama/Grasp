@@ -30,8 +30,8 @@ public:
 		, MaxHeightAbove(30.f)
 		, MaxHeightBelow(30.f)
 		, NormalizedGrantAbilityDistance(0.7f)
-		, AuthNetToleranceAngleScalar(1.1f)
-		, AuthNetToleranceDistanceScalar(1.1f)
+		, AuthNetToleranceAnglePct(10.f)
+		, AuthNetToleranceDistancePct(10.f)
 		, bGrantAbilityDistance2D(false)
 		, bGraspDistance2D(false)
 	{}
@@ -85,18 +85,22 @@ public:
 	float NormalizedGrantAbilityDistance;
 
 	/**
-	 * Distance will effectively be increased by this amount on server authority for angle checks
+	 * Angle will effectively be increased by this amount on server authority for angle checks
 	 * This allows potentially minor discrepancies in distance checks to be ignored for ability activation
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp, meta=(UIMin="1", ClampMin="1", UIMax="2", Delta="0.05", ForceUnits="x"))
-	float AuthNetToleranceAngleScalar;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, AdvancedDisplay, Category=Grasp, meta=(UIMin="0", ClampMin="0", UIMax="100", Delta="0.5", ForceUnits="Percent"))
+	float AuthNetToleranceAnglePct;
+	
 	/**
 	 * Distance will effectively be increased by this amount on server authority for distance checks
 	 * This allows potentially minor discrepancies in distance checks to be ignored for ability activation
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp, meta=(UIMin="1", ClampMin="1", UIMax="2", Delta="0.05", ForceUnits="x"))
-	float AuthNetToleranceDistanceScalar;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, AdvancedDisplay, Category=Grasp, meta=(UIMin="0", ClampMin="0", UIMax="100", Delta="0.5", ForceUnits="Percent"))
+	float AuthNetToleranceDistancePct;
+
+	float GetAuthNetToleranceAngleScalar() const { return 1.f + (AuthNetToleranceAnglePct / 100.f); }
+	float GetAuthNetToleranceDistanceScalar() const { return 1.f + (AuthNetToleranceDistancePct / 100.f); }
+
 	
 	/**
 	 * Use 2D distance checks for granting the ability
