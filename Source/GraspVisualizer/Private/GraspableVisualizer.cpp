@@ -120,6 +120,35 @@ void FGraspableVisualizer::DrawVisualization(const UActorComponent* InComponent,
 		const float AngleRadians = FMath::DegreesToRadians(Angle);
 		const float DeltaAngle = (AngleRadians * 2.f) / (Sections - 1);
 
+		// Draw a line from the origin to the inner arc showing the angle we can interact at
+		{
+			const float A = AngleRadians + (Sections-1) * -DeltaAngle;
+
+			FVector Dir = Forward * FMath::Cos(A) + Right * FMath::Sin(A);
+			FVector Start = Location;
+			FVector End = Location + Dir * Distance;
+
+			PDI->DrawLine(Start, End, Color, SDPG_World, 1.f);
+		}
+		// Draw a line from the origin to the center of the arc showing the angle we can interact at
+		{
+			FVector Start = Location;
+			FVector End = Location + Forward * Distance;
+
+			PDI->DrawLine(Start, End, Color, SDPG_World, 1.f);
+		}
+		// Draw a line from the origin to the outer arc showing the angle we can interact at
+		{
+			const float A = -AngleRadians + (Sections-1) * DeltaAngle;
+
+			FVector Dir = Forward * FMath::Cos(A) + Right * FMath::Sin(A);
+			FVector Start = Location;
+			FVector End = Location + Dir * Distance;
+
+			PDI->DrawLine(Start, End, Color, SDPG_World, 1.f);
+		}
+
+		// Draw lines representing the angle we can interact with (shading)
 		for (int32 i = 0; i < Sections; ++i)
 		{
 			const float A = -AngleRadians + i * DeltaAngle;
