@@ -306,6 +306,35 @@ public:
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static EGraspQueryResult CanInteractWith(const AActor* Interactor, const UPrimitiveComponent* Graspable,
 		float& NormalizedAngleDiff, float& NormalizedDistance, float& NormalizedHighlightDistance);
+
+	/**
+	 * Check if the Interactor is within distance to the Interactable
+	 * @param Interactor The interactor actor
+	 * @param Graspable The graspable (interactable) component
+	 * @param NormalizedDistance The normalized distance between the interactor and the graspable
+	 * @param NormalizedHighlightDistance The normalized highlight distance between the interactor and the graspable
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static EGraspQueryResult CanInteractWithRange(const AActor* Interactor, const UPrimitiveComponent* Graspable,
+		float& NormalizedDistance, float& NormalizedHighlightDistance);
+
+	/**
+	 * Check if the Interactor is within angle to the Interactable
+	 * @param Interactor The interactor actor
+	 * @param Graspable The graspable (interactable) component
+	 * @param NormalizedAngleDiff The normalized angle difference between the interactor and the graspable
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static bool CanInteractWithAngle(const AActor* Interactor, const UPrimitiveComponent* Graspable,
+		float& NormalizedAngleDiff);
+
+	/**
+	 * Check if the Interactor is within height above and below to the Interactable
+	 * @param Interactor The interactor actor
+	 * @param Graspable The graspable (interactable) component
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static bool CanInteractWithHeight(const AActor* Interactor, const UPrimitiveComponent* Graspable);
 };
 
 template <typename T>

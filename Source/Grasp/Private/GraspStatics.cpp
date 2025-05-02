@@ -859,3 +859,132 @@ EGraspQueryResult UGraspStatics::CanInteractWith(const AActor* Interactor, const
 
 	return EGraspQueryResult::Interact;
 }
+
+EGraspQueryResult UGraspStatics::CanInteractWithRange(const AActor* Interactor, const UPrimitiveComponent* Graspable,
+	float& NormalizedDistance, float& NormalizedHighlightDistance)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CanInteractWithRange);
+	
+	NormalizedDistance = 0.f;
+	NormalizedHighlightDistance = 0.f;
+
+	// Validate the interactor
+	if (!IsValid(Interactor))
+	{
+		return EGraspQueryResult::None;
+	}
+
+	// Validate the graspable
+	if (!Graspable)
+	{
+		return EGraspQueryResult::None;
+	}
+
+	const FVector InteractorLocation = Interactor->GetActorLocation();
+	const FVector Location = Graspable->GetComponentLocation();
+	const UGraspData* Data = CastChecked<IGraspableComponent>(Graspable)->GetGraspData();
+
+	const float AuthNetToleranceDistanceScalar = Data->GetAuthNetToleranceDistanceScalar();
+
+	const float Distance = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
+		Data->MaxGraspDistance * AuthNetToleranceDistanceScalar : Data->MaxGraspDistance;
+
+	const float HighlightDistance = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
+		Data->MaxHighlightDistance * AuthNetToleranceDistanceScalar : Data->MaxHighlightDistance;
+
+	// Check if within distance
+	if (!IsInteractableWithinDistance(Location, InteractorLocation, Distance))
+	{
+		// Check if highlight is enabled and within distance
+		if (HighlightDistance > 0.f && IsInteractableWithinDistance(Location, InteractorLocation, HighlightDistance))
+		{
+			NormalizedHighlightDistance = FMath::Clamp(
+				FVector::Dist2D(Location, InteractorLocation) / HighlightDistance, 0.f, 1.f);
+
+			return EGraspQueryResult::Highlight;
+		}
+
+		return EGraspQueryResult::None;
+	}
+
+	const float DistNormalized = Data->bGraspDistance2D ? FVector::Dist2D(Location, InteractorLocation) :
+		FVector::Dist(Location, InteractorLocation);
+	
+	NormalizedDistance = FMath::Clamp(DistNormalized / Distance, 0.f, 1.f);
+
+	return EGraspQueryResult::Interact;
+}
+
+bool UGraspStatics::CanInteractWithAngle(const AActor* Interactor, const UPrimitiveComponent* Graspable,
+	float& NormalizedAngleDiff)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CanInteractWithAngle);
+	
+	NormalizedAngleDiff = 0.f;
+
+	// Validate the interactor
+	if (!IsValid(Interactor))
+	{
+		return false;
+	}
+
+	// Validate the graspable
+	if (!Graspable)
+	{
+		return false;
+	}
+
+	const FVector InteractorLocation = Interactor->GetActorLocation();
+	const FVector Location = Graspable->GetComponentLocation();
+	const FVector Forward = Graspable->GetForwardVector();
+	const UGraspData* Data = CastChecked<IGraspableComponent>(Graspable)->GetGraspData();
+
+	const float AuthNetToleranceAngleScalar = Data->GetAuthNetToleranceAngleScalar();
+
+	const float Angle = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
+		Data->MaxGraspAngle * AuthNetToleranceAngleScalar : Data->MaxGraspAngle;
+
+	// Check if within angle
+	if (!IsInteractableWithinAngle(Location, InteractorLocation, Forward, Angle))
+	{
+		return false;
+	}
+
+	const float AngleNormalized = FMath::Clamp(
+		FVector::Dist2D(Location, InteractorLocation) / Angle, 0.f, 1.f);
+	
+	NormalizedAngleDiff = AngleNormalized;
+
+	return true;
+}
+
+bool UGraspStatics::CanInteractWithHeight(const AActor* Interactor, const UPrimitiveComponent* Graspable)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CanInteractWithHeight);
+	
+	// Validate the interactor
+	if (!IsValid(Interactor))
+	{
+		return false;
+	}
+
+	// Validate the graspable
+	if (!Graspable)
+	{
+		return false;
+	}
+
+	const FVector InteractorLocation = Interactor->GetActorLocation();
+	const FVector Location = Graspable->GetComponentLocation();
+	const UGraspData* Data = CastChecked<IGraspableComponent>(Graspable)->GetGraspData();
+
+	const float AuthNetToleranceDistanceScalar = Data->GetAuthNetToleranceDistanceScalar();
+
+	const float MaxHeightAbove = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
+		Data->MaxHeightAbove * AuthNetToleranceDistanceScalar : Data->MaxHeightAbove;
+
+	const float MaxHeightBelow = Interactor->HasAuthority() && Interactor->GetNetMode() != NM_Standalone ?
+		Data->MaxHeightBelow * AuthNetToleranceDistanceScalar : Data->MaxHeightBelow;
+
+	return IsInteractableWithinHeight(Location, InteractorLocation, MaxHeightAbove, MaxHeightBelow);
+}
