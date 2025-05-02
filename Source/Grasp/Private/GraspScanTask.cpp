@@ -20,6 +20,7 @@
 
 #include "GraspableComponent.h"
 #include "GraspData.h"
+#include "GraspDeveloper.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspScanTask)
 
@@ -54,6 +55,22 @@ UGraspScanTask::UGraspScanTask(const FObjectInitializer& ObjectInitializer)
 
 UGraspScanTask* UGraspScanTask::GraspScan(UGameplayAbility* OwningAbility, float ErrorWaitDelay)
 {
+#if !UE_BUILD_SHIPPING
+	// Ability should always have authority; clients never need to give abilities, which this task is for
+	const bool bInvalidAuth = !OwningAbility->K2_HasAuthority();
+	const bool bInvalidExec = OwningAbility->GetNetExecutionPolicy() != EGameplayAbilityNetExecutionPolicy::ServerOnly;
+	const bool bInvalidSec = OwningAbility->GetNetSecurityPolicy() != EGameplayAbilityNetSecurityPolicy::ServerOnly;
+	if (!GetDefault<UGraspDeveloper>()->bDisableScanTaskAbilityErrorChecking)
+	{
+		FMessageLog("PIE").Error(FText::Format(
+			LOCTEXT("GraspScanTaskInvalidAbility", "GraspScanTask: Invalid ability: {0} (InvalidAuth: {1}, InvalidExec: {2}, InvalidSec: {3})"),
+			FText::FromString(OwningAbility->GetName()),
+			bInvalidAuth ? TEXT("true") : TEXT("false"),
+			bInvalidExec ? TEXT("true") : TEXT("false"),
+			bInvalidSec ? TEXT("true") : TEXT("false")));
+	}
+#endif
+	
 	UGraspScanTask* MyObj = NewAbilityTask<UGraspScanTask>(OwningAbility);
 	MyObj->Delay = ErrorWaitDelay;
 	return MyObj;
