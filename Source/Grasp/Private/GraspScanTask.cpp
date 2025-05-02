@@ -266,7 +266,7 @@ void UGraspScanTask::RequestGrasp()
 	AActor* TargetingSource = GC->GetTargetingSource();
 	if (!TargetingSource)
 	{
-		UE_LOG(LogGrasp, Verbose, TEXT("%s GraspScanTask::RequestGrasp: Invalid TargetingSource. [SYSTEM WAIT]"),
+		UE_LOG(LogGrasp, Verbose, TEXT("%s GraspScanTask::RequestGrasp: Invalid TargetingSource. Did you call InitializeGrasp()? [SYSTEM WAIT]"),
 		       *GetRoleString());
 		WaitForGrasp(Delay, {"Invalid TargetingSource"});
 		return;
