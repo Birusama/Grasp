@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GraspableComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "GraspDeveloper.h"
+#include "GraspStatics.h"
 #include "GraspableCapsuleComponent.generated.h"
 
 class UGraspData;
@@ -63,11 +63,8 @@ public:
 		PrimaryComponentTick.bStartWithTickEnabled = false;
 		PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
 		SetIsReplicatedByDefault(false);
-		
-		BodyInstance.SetResponseToAllChannels(ECR_Ignore);
-		BodyInstance.SetObjectType(ECC_WorldDynamic);
-		BodyInstance.SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
+		UGraspStatics::SetupGraspableComponentCollision(this);
 		SetGenerateOverlapEvents(false);
 		CanCharacterStepUpOn = ECB_No;
 		bCanEverAffectNavigation = false;
@@ -78,23 +75,4 @@ public:
 		LineThickness = 1.f;
 		ShapeColor = FColor::Magenta;
 	}
-
-#if WITH_EDITOR
-	virtual void OnComponentCreated() override
-	{
-		Super::OnComponentCreated();
-
-		if (IsTemplate())
-		{
-			if (const UGraspDeveloper* GraspDeveloper = GetDefault<UGraspDeveloper>())
-			{
-				SetCollisionObjectType(GraspDeveloper->GraspDefaultObjectType);
-				if (GraspDeveloper->bSetDefaultOverlapChannel)
-				{
-					SetCollisionResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap);
-				}
-			}
-		}
-	}
-#endif
 };

@@ -4,8 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "Engine/CollisionProfile.h"
 #include "GraspDeveloper.generated.h"
 
+UENUM(BlueprintType)
+enum class EGraspDefaultCollisionMode : uint8
+{
+	Profile,
+	ObjectType,
+	Disabled,
+};
 
 /**
  * Set defaults for Grasp
@@ -16,15 +24,21 @@ class GRASP_API UGraspDeveloper : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	/** When adding new Grasp Components they will default to this Object Type */
 	UPROPERTY(EditAnywhere, Config, Category=Grasp)
+	EGraspDefaultCollisionMode GraspDefaultCollisionMode = EGraspDefaultCollisionMode::Profile;
+	
+	UPROPERTY(EditAnywhere, Config, Category=Grasp, meta=(EditCondition="GraspDefaultCollisionMode==EGraspDefaultCollisionMode::Profile", EditConditionHides))
+	FCollisionProfileName GraspDefaultCollisionProfile = FCollisionProfileName(TEXT("NoCollision"));
+	
+	/** When adding new Grasp Components they will default to this Object Type */
+	UPROPERTY(EditAnywhere, Config, Category=Grasp, meta=(EditCondition="GraspDefaultCollisionMode==EGraspDefaultCollisionMode::ObjectType", EditConditionHides))
 	TEnumAsByte<enum ECollisionChannel> GraspDefaultObjectType = ECC_WorldDynamic;
 
-	UPROPERTY(EditAnywhere, Config, Category=Grasp)
+	UPROPERTY(EditAnywhere, Config, Category=Grasp, meta=(EditCondition="GraspDefaultCollisionMode==EGraspDefaultCollisionMode::ObjectType", EditConditionHides))
 	bool bSetDefaultOverlapChannel = false;
 	
 	/** When adding new Grasp Components they will default to overlapping this Trace Channel */
-	UPROPERTY(EditAnywhere, Config, Category=Grasp, meta=(EditCondition="bSetDefaultOverlapChannel", EditConditionHides))
+	UPROPERTY(EditAnywhere, Config, Category=Grasp, meta=(EditCondition="GraspDefaultCollisionMode==EGraspDefaultCollisionMode::ObjectType&&bSetDefaultOverlapChannel", EditConditionHides))
 	TEnumAsByte<enum ECollisionChannel> GraspDefaultOverlapChannel = ECC_Visibility;
 	
 	/**

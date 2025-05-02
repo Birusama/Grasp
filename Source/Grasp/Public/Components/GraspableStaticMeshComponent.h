@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GraspableComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "GraspDeveloper.h"
+#include "GraspStatics.h"
 #include "GraspableStaticMeshComponent.generated.h"
 
 class UGraspData;
@@ -63,11 +63,8 @@ public:
 		PrimaryComponentTick.bStartWithTickEnabled = false;
 		PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
 		SetIsReplicatedByDefault(false);
-		
-		BodyInstance.SetResponseToAllChannels(ECR_Ignore);
-		BodyInstance.SetObjectType(ECC_WorldDynamic);
-		BodyInstance.SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
+		UGraspStatics::SetupGraspableComponentCollision(this);
 		SetGenerateOverlapEvents(false);
 		CanCharacterStepUpOn = ECB_No;
 		bCanEverAffectNavigation = false;
@@ -75,23 +72,4 @@ public:
 
 		SetHiddenInGame(true);
 	}
-
-#if WITH_EDITOR
-	virtual void OnComponentCreated() override
-	{
-		Super::OnComponentCreated();
-
-		if (IsTemplate())
-		{
-			if (const UGraspDeveloper* GraspDeveloper = GetDefault<UGraspDeveloper>())
-			{
-				SetCollisionObjectType(GraspDeveloper->GraspDefaultObjectType);
-				if (GraspDeveloper->bSetDefaultOverlapChannel)
-				{
-					SetCollisionResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap);
-				}
-			}
-		}
-	}
-#endif
 };

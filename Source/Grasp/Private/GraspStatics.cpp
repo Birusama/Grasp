@@ -22,6 +22,7 @@
 #endif
 
 #include "GraspableOwner.h"
+#include "GraspDeveloper.h"
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "Components/Widget.h"
 #include "Kismet/GameplayStatics.h"
@@ -1017,4 +1018,31 @@ FVector2D UGraspStatics::GetScreenPositionForGraspableComponent(const UPrimitive
 	}
 
 	return ScreenPosition;
+}
+
+void UGraspStatics::SetupGraspableComponentCollision(UPrimitiveComponent* GraspableComponent)
+{
+	// if (IsValid(GraspableComponent))
+	{
+		// const bool bTemplate = GraspableComponent->IsTemplate();
+		// const bool bWorld = GraspableComponent->GetWorld() && !GraspableComponent->GetWorld()->IsGameWorld();
+		if (const UGraspDeveloper* GraspDeveloper = GetDefault<UGraspDeveloper>())
+		{
+			switch (GraspDeveloper->GraspDefaultCollisionMode)
+			{
+			case EGraspDefaultCollisionMode::Profile:
+				GraspableComponent->BodyInstance.SetCollisionProfileName(GraspDeveloper->GraspDefaultCollisionProfile.Name);
+				break;
+			case EGraspDefaultCollisionMode::ObjectType:
+				GraspableComponent->BodyInstance.SetObjectType(GraspDeveloper->GraspDefaultObjectType);
+				if (GraspDeveloper->bSetDefaultOverlapChannel)
+				{
+					GraspableComponent->BodyInstance.SetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap);
+				}
+				break;
+			case EGraspDefaultCollisionMode::Disabled:
+				break;
+			}
+		}
+	}
 }
