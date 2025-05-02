@@ -8,6 +8,7 @@
 > **Gameplay Interaction System**
 > <br>Full Net Prediction
 > <br>Pairs with the [Vigil](https://github.com/Vaei/Vigil) Focusing System
+> <br>Pairs with [Doors - Coming Soon](https://github.com/Vaei/Doors)
 > <br>And its **FREE!**
 
 > [!WARNING]
@@ -16,4 +17,4 @@
 
 > [!TIP]
 > Suitable for both singleplayer and multiplayer games
-> <br>Supports UE5.5+
+> <br>Supports UE5.4+
