@@ -38,6 +38,8 @@ bool UGraspStatics::PrepareGraspAbilityDataPayload(const UPrimitiveComponent* Gr
 	FGameplayEventData& Payload, const AActor* SourceActor, const FGameplayAbilityActorInfo* ActorInfo,
 	EGraspAbilityComponentSource Source)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::PrepareGraspAbilityDataPayload);
+	
 	Payload = {};
 
 	// User might handle this in a custom way
@@ -83,6 +85,8 @@ bool UGraspStatics::PrepareGraspAbilityDataPayload(const UPrimitiveComponent* Gr
 bool UGraspStatics::CanGraspActivateAbility(const AActor* SourceActor, const UPrimitiveComponent* GraspableComponent,
 	EGraspAbilityComponentSource Source)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CanGraspActivateAbility);
+	
 	if (!GraspableComponent)
 	{
 		return false;
@@ -143,6 +147,8 @@ bool UGraspStatics::CanGraspActivateAbility(const AActor* SourceActor, const UPr
 bool UGraspStatics::TryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
 	EGraspAbilityComponentSource Source)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::TryActivateGraspAbility);
+	
 	// Find the grasp component (from the SourceActor's Controller)
 	UGraspComponent* GraspComponent = FindGraspComponentForActor(SourceActor);
 	if (!GraspComponent)
@@ -209,6 +215,8 @@ bool UGraspStatics::TryActivateGraspAbility(const AActor* SourceActor, UPrimitiv
 
 UObject* UGraspStatics::GetGraspSourceObject(const UGameplayAbility* Ability)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetGraspSourceObject);
+	
 	// Don't use the built-in GetSourceObject() -- it expects we're instantiated, but we're not, we manually built this into the spec
 	const UAbilitySystemComponent* const ASC = Ability->GetAbilitySystemComponentFromActorInfo_Checked();
 	if (const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Ability->GetCurrentAbilitySpecHandle()))
@@ -226,6 +234,8 @@ const UObject* UGraspStatics::GetGraspObjectFromPayload(const FGameplayEventData
 const UPrimitiveComponent* UGraspStatics::K2_GetGraspableComponent(const UGameplayAbility* Ability,
 	FGameplayEventData Payload, TSubclassOf<UPrimitiveComponent> ComponentType)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::K2_GetGraspableComponent);
+	
 	const UObject* Object = GetGraspObjectFromPayload(Payload);
 	if (!Object)
 	{
@@ -244,6 +254,8 @@ const UPrimitiveComponent* UGraspStatics::K2_GetGraspableComponent(const UGamepl
 const UPrimitiveComponent* UGraspStatics::K2_GetGraspablePrimitive(const UGameplayAbility* Ability,
 	FGameplayEventData Payload)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::K2_GetGraspablePrimitive);
+	
 	const UObject* Object = GetGraspObjectFromPayload(Payload);
 	if (!Object)
 	{
@@ -398,6 +410,8 @@ UGraspComponent* UGraspStatics::FindGraspComponentForPlayerState(APlayerState* P
 
 void UGraspStatics::FlushServerMovesForActor(AActor* CharacterActor)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::FlushServerMovesForActor);
+	
 	if (IsValid(CharacterActor))
 	{
 		if (const ACharacter* Character = Cast<ACharacter>(CharacterActor))
@@ -412,6 +426,8 @@ void UGraspStatics::FlushServerMovesForActor(AActor* CharacterActor)
 
 void UGraspStatics::FlushServerMoves(ACharacter* Character)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::FlushServerMoves);
+	
 	if (IsValid(Character))
 	{
 		if (UCharacterMovementComponent* CharacterMovement = Character->GetCharacterMovement())
@@ -423,6 +439,8 @@ void UGraspStatics::FlushServerMoves(ACharacter* Character)
 
 EGraspCardinal_4Way UGraspStatics::GetCardinalDirectionFromAngle_4Way(float Angle)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetCardinalDirectionFromAngle_4Way);
+	
 	const float AngleAbs = FMath::Abs(Angle);
 
 	// Forward
@@ -568,16 +586,19 @@ EGraspCardinal_8Way UGraspStatics::GetOppositeCardinalDirection_8Way(EGraspCardi
 
 FVector UGraspStatics::GetDirectionFromCardinal_4Way(EGraspCardinal_4Way Cardinal, const FRotator& SourceRotation)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetDirectionFromCardinal_4Way);
 	return SourceRotation.RotateVector(GetSnappedDirectionFromCardinal_4Way(Cardinal));
 }
 
 FVector UGraspStatics::GetDirectionFromCardinal_8Way(EGraspCardinal_8Way Cardinal, const FRotator& SourceRotation)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetDirectionFromCardinal_8Way);
 	return SourceRotation.RotateVector(GetSnappedDirectionFromCardinal_8Way(Cardinal));
 }
 
 FVector UGraspStatics::GetSnappedDirectionFromCardinal_4Way(EGraspCardinal_4Way Cardinal)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetSnappedDirectionFromCardinal_4Way);
 	switch (Cardinal)
 	{
 	case EGraspCardinal_4Way::Forward:
@@ -595,6 +616,7 @@ FVector UGraspStatics::GetSnappedDirectionFromCardinal_4Way(EGraspCardinal_4Way 
 
 FVector UGraspStatics::GetSnappedDirectionFromCardinal_8Way(EGraspCardinal_8Way Cardinal)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetSnappedDirectionFromCardinal_8Way);
 	switch (Cardinal)
 	{
 	case EGraspCardinal_8Way::Forward:
@@ -751,6 +773,8 @@ bool UGraspStatics::CanInteractWithinHeight(const AActor* Interactor, const FVec
 EGraspQueryResult UGraspStatics::CanInteractWith(const AActor* Interactor, const UPrimitiveComponent* Component,
 	float& NormalizedAngleDiff, float& NormalizedDistance, float& NormalizedHighlightDistance)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CanInteractWith);
+	
 	NormalizedAngleDiff = 0.f;
 	NormalizedDistance = 0.f;
 	NormalizedHighlightDistance = 0.f;

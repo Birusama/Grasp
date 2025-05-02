@@ -90,6 +90,8 @@ void UAbilityTask_GraspFaceTowards::InitSimulatedTask(UGameplayTasksComponent& I
 
 void UAbilityTask_GraspFaceTowards::SharedInitAndApply()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UAbilityTask_GraspFaceTowards::SharedInitAndApply);
+	
 	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
 	if (ASC && ASC->AbilityActorInfo->MovementComponent.IsValid())
 	{
@@ -155,6 +157,8 @@ void UAbilityTask_GraspFaceTowards::TickTask(float DeltaTime)
 		return;
 	}
 
+	TRACE_CPUPROFILER_EVENT_SCOPE(UAbilityTask_GraspFaceTowards::TickTask);
+	
 	AActor* MyActor = GetAvatarActor();
 	if (MyActor)
 	{

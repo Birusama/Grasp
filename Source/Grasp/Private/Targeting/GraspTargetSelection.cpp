@@ -106,6 +106,8 @@ FQuat UGraspTargetSelection::GetSourceRotationOffset_Implementation(
 
 void UGraspTargetSelection::UpdateGraspAbilityRadius()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspTargetSelection::UpdateGraspAbilityRadius);
+	
 	// Average the dimensions of the shape to get a radius
 	switch (ShapeType)
 	{
@@ -156,7 +158,9 @@ void UGraspTargetSelection::PostEditChangeProperty(struct FPropertyChangedEvent&
 #endif
 
 APawn* UGraspTargetSelection::GetPawnFromTargetingHandle(const FTargetingRequestHandle& TargetingHandle)
-{ 
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspTargetSelection::GetPawnFromTargetingHandle);
+	
 	if (TargetingHandle.IsValid())
 	{
 		if (const FTargetingSourceContext* SourceContext = FTargetingSourceContext::Find(TargetingHandle))
@@ -196,6 +200,8 @@ bool UGraspTargetSelection::GetPawnCapsuleSize(const FTargetingRequestHandle& Ta
 
 float UGraspTargetSelection::CalcPawnMovementAlpha(const FTargetingRequestHandle& TargetingHandle) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspTargetSelection::CalcPawnMovementAlpha);
+	
 	if (MovementSelectionMode == EGraspMovementSelectionMode::Disabled)
 	{
 		return 0.f;

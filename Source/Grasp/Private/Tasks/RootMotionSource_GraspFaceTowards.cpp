@@ -24,6 +24,8 @@ FRootMotionSource* FRootMotionSource_GraspFaceTowards::Clone() const
 
 bool FRootMotionSource_GraspFaceTowards::Matches(const FRootMotionSource* Other) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(FRootMotionSource_GraspFaceTowards::Matches);
+	
 	if (!FRootMotionSource::Matches(Other))
 	{
 		return false;
@@ -39,6 +41,8 @@ bool FRootMotionSource_GraspFaceTowards::Matches(const FRootMotionSource* Other)
 void FRootMotionSource_GraspFaceTowards::PrepareRootMotion(float SimulationTime, float MovementTickTime,
 	const ACharacter& Character, const UCharacterMovementComponent& MoveComponent)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(FRootMotionSource_GraspFaceTowards::PrepareRootMotion);
+	
 	RootMotionParams.Clear();
 
 	if (Duration > UE_SMALL_NUMBER)

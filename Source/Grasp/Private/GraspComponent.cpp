@@ -45,6 +45,8 @@ UGraspComponent::UGraspComponent(const FObjectInitializer& ObjectInitializer)
 
 void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemComponent, TSubclassOf<UGameplayAbility> ScanAbility)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::InitializeGrasp);
+	
 	if (IsValid(GetOwner()))
 	{
 		// Cache the ability system component
@@ -254,6 +256,8 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 	// Grant any new abilities that aren't pre-granted
 	for (const FGraspScanResult& Result : Results)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::GraspTargetsReady_GrantAbility);
+		
 		// We have already filtered for these
 		const UPrimitiveComponent* Component = Result.Graspable.IsValid() ? Result.Graspable.Get() : nullptr;
 		const IGraspableComponent* Graspable = CastChecked<IGraspableComponent>(Component);
@@ -343,6 +347,8 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 	// Remove any abilities granted for the old results unless they are still valid
 	for (const FGraspScanResult& Result : LastScanResults)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::GraspTargetsReady_RemoveAbility);
+		
 		// If still valid, don't remove
 		if (CurrentScanResults.Contains(Result))  // This compares the Graspable component
 		{
