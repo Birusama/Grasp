@@ -13,10 +13,6 @@
 #include "Engine/GameInstance.h"
 #include "Misc/UObjectToken.h"
 
-#if ENABLE_VISUAL_LOG
-#include "VisualLogger/VisualLogger.h"
-#endif
-
 #include "Kismet/KismetMathLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspComponent)
@@ -222,13 +218,7 @@ void UGraspComponent::DrawDebugGrantAbilityBox(const UPrimitiveComponent* Compon
 			SDPG_World, 5.f);
 		DrawDebugString(GetWorld(), Component->GetComponentLocation() + FVector(0.f, 0.f, 10.f),
 			FString::Printf(TEXT("%s: %s"), *Info, *Ability), nullptr, Color, 1.4f, true);
-
 	}
-#endif
-
-#if ENABLE_VISUAL_LOG
-	const FBox Box = Component->Bounds.GetBox().ExpandBy(4.f);
-	UE_VLOG_BOX(Controller, LogGrasp, Log, Box, Color, TEXT(""));
 #endif
 }
 
@@ -244,13 +234,6 @@ void UGraspComponent::DrawDebugGrantAbilityLine(const UPrimitiveComponent* Compo
 				Color, false, GetWorld()->GetDeltaSeconds() * 2.f,
 				SDPG_Foreground, 3.f);
 		}
-	}
-#endif
-
-#if ENABLE_VISUAL_LOG
-	if (const APawn* Pawn = Controller ? Controller->GetPawn() : nullptr)
-	{
-		// UE_VLOG_SEGMENT_THICK(Controller, LogGrasp, Log, Pawn->GetActorLocation(), Component->GetComponentLocation(), Color, 3.f, TEXT(""));
 	}
 #endif
 }
