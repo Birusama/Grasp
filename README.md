@@ -8,7 +8,7 @@
 > **Gameplay Interaction System**
 > <br>Full Net Prediction
 > <br>Pairs with the [Vigil](https://github.com/Vaei/Vigil) Focusing System
-> <br>Pairs with [Doors - Coming Soon](https://github.com/Vaei/Doors)
+> <br>Pairs with [Doors](https://github.com/Vaei/Doors) - Coming Soon
 > <br>And its **FREE!**
 
 > [!WARNING]
