@@ -60,14 +60,17 @@ UGraspScanTask* UGraspScanTask::GraspScan(UGameplayAbility* OwningAbility, float
 	const bool bInvalidAuth = !OwningAbility->K2_HasAuthority();
 	const bool bInvalidExec = OwningAbility->GetNetExecutionPolicy() != EGameplayAbilityNetExecutionPolicy::ServerOnly;
 	const bool bInvalidSec = OwningAbility->GetNetSecurityPolicy() != EGameplayAbilityNetSecurityPolicy::ServerOnly;
-	if (!GetDefault<UGraspDeveloper>()->bDisableScanTaskAbilityErrorChecking)
+	if (bInvalidAuth || bInvalidExec || bInvalidSec)
 	{
-		FMessageLog("PIE").Error(FText::Format(
-			LOCTEXT("GraspScanTaskInvalidAbility", "GraspScanTask: Invalid ability: {0} (InvalidAuth: {1}, InvalidExec: {2}, InvalidSec: {3})"),
-			FText::FromString(OwningAbility->GetName()),
-			bInvalidAuth ? TEXT("true") : TEXT("false"),
-			bInvalidExec ? TEXT("true") : TEXT("false"),
-			bInvalidSec ? TEXT("true") : TEXT("false")));
+		if (!GetDefault<UGraspDeveloper>()->bDisableScanTaskAbilityErrorChecking)
+		{
+			FMessageLog("PIE").Error(FText::Format(
+				LOCTEXT("GraspScanTaskInvalidAbility", "GraspScanTask: Invalid ability: {0} (InvalidAuth: {1}, InvalidExec: {2}, InvalidSec: {3})"),
+				FText::FromString(OwningAbility->GetName()),
+				FText::FromString(bInvalidAuth ? TEXT("true") : TEXT("false")),
+				FText::FromString(bInvalidExec ? TEXT("true") : TEXT("false")),
+				FText::FromString(bInvalidSec ? TEXT("true") : TEXT("false"))));
+		}
 	}
 #endif
 	
