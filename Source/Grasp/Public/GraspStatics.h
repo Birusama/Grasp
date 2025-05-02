@@ -7,6 +7,7 @@
 #include "GraspTypes.h"
 #include "GraspStatics.generated.h"
 
+class UWidget;
 class UGameplayAbility;
 struct FGameplayAbilitySpec;
 struct FGameplayAbilityActorInfo;
@@ -335,6 +336,22 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static bool CanInteractWithHeight(const AActor* Interactor, const UPrimitiveComponent* Graspable);
+
+public:
+	/**
+	 * Get the screen position of the graspable component
+	 * UI Helper to place a widget over the interactable
+	 * @param GraspableComponent The graspable component
+	 * @param PlayerController The player controller
+	 * @param Widget The widget to use for the screen position
+	 * @return The screen position of the graspable component
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	static FVector2D GetScreenPositionForGraspableComponent(const UPrimitiveComponent* GraspableComponent,
+		APlayerController* PlayerController, const UWidget* Widget, bool& bSuccess);
+	
+public:
+	static void SetupGraspableComponentCollision(UPrimitiveComponent* GraspableComponent);
 };
 
 template <typename T>

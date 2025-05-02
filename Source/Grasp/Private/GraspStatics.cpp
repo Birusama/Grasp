@@ -22,6 +22,9 @@
 #endif
 
 #include "GraspableOwner.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
+#include "Components/Widget.h"
+#include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspStatics)
 
@@ -987,4 +990,31 @@ bool UGraspStatics::CanInteractWithHeight(const AActor* Interactor, const UPrimi
 		Data->MaxHeightBelow * AuthNetToleranceDistanceScalar : Data->MaxHeightBelow;
 
 	return IsInteractableWithinHeight(Location, InteractorLocation, MaxHeightAbove, MaxHeightBelow);
+}
+
+FVector2D UGraspStatics::GetScreenPositionForGraspableComponent(const UPrimitiveComponent* GraspableComponent,
+	APlayerController* PlayerController, const UWidget* Widget, bool& bSuccess)
+{
+	bSuccess = false;
+	FVector2D ScreenPosition;
+	if (!IsValid(PlayerController) || !IsValid(GraspableComponent) && Widget)
+	{
+		return ScreenPosition;
+	}
+
+	// Get the screen position of the graspable component
+	if (UGameplayStatics::ProjectWorldToScreen(PlayerController, GraspableComponent->GetComponentLocation(),
+		ScreenPosition, true))
+	{
+		bSuccess = true;
+
+		// Convert to viewport coordinates
+		USlateBlueprintLibrary::ScreenToViewport(PlayerController, ScreenPosition, ScreenPosition);
+
+		// Adjust for the widget half size to center the widget
+		const FVector2D DesiredSize = Widget->GetDesiredSize() * 0.5f;
+		ScreenPosition -= DesiredSize;
+	}
+
+	return ScreenPosition;
 }
