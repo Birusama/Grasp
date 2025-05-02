@@ -218,7 +218,7 @@ UObject* UGraspStatics::GetGraspSourceObject(const UGameplayAbility* Ability)
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetGraspSourceObject);
 	
 	// Don't use the built-in GetSourceObject() -- it expects we're instantiated, but we're not, we manually built this into the spec
-	const UAbilitySystemComponent* const ASC = Ability->GetAbilitySystemComponentFromActorInfo_Checked();
+	const UAbilitySystemComponent* const ASC = Ability->GetAbilitySystemComponentFromActorInfo_Ensured();
 	if (const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Ability->GetCurrentAbilitySpecHandle()))
 	{
 		return Spec->SourceObject.IsValid() ? Spec->SourceObject.Get() : nullptr;
