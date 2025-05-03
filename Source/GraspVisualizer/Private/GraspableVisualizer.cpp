@@ -94,7 +94,7 @@ void FGraspableVisualizer::DrawVisualization(const UActorComponent* InComponent,
 	const float Distance = bDrawOuter ? Data->MaxHighlightDistance : Data->MaxGraspDistance;
 	
 	// Inner Arc representing the angle and grasp distance
-	DrawArc(PDI, Location, Forward, Right, -Angle, Angle, Data->MaxGraspDistance, Sections, Color, SDPG_Foreground);
+	DrawArc(PDI, Location, Forward, Right, -Angle, Angle, Data->MaxGraspDistance, Sections, Color, SDPG_World);
 	DrawCircle(PDI, Location, Forward, Right, RemColor, Data->MaxGraspDistance, Sections, SDPG_World);
 	if (bDrawBelow)
 	{
@@ -104,7 +104,7 @@ void FGraspableVisualizer::DrawVisualization(const UActorComponent* InComponent,
 	// Outer Arc representing the angle and highlight distance
 	if (bDrawOuter)
 	{
-		DrawArc(PDI, Location, Forward, Right, -Angle, Angle, Data->MaxHighlightDistance, Sections, Color, SDPG_Foreground);
+		DrawArc(PDI, Location, Forward, Right, -Angle, Angle, Data->MaxHighlightDistance, Sections, Color, SDPG_World);
 		DrawCircle(PDI, Location, Forward, Right, RemColor, Data->MaxHighlightDistance, Sections, SDPG_World, 1.f);
 		if (bDrawBelow)
 		{
