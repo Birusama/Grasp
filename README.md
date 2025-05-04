@@ -1,9 +1,5 @@
 # Grasp <img align="right" width=128, height=128 src="https://github.com/Vaei/Grasp/blob/main/Resources/Icon128.png">
 
-> [!CAUTION]
-> This plugin is not ready at all
-> <br>You should not use it yet
-
 > [!IMPORTANT]
 > **Gameplay Interaction System**
 > <br>Full Net Prediction
@@ -24,6 +20,15 @@
 > <br>There are many non-standard setups that have not been fully tested
 > <br>Grasp has not been tested at scale in production
 > <br>Feedback is wanted on Grasp's workflow
+
+## Watch Me
+
+> [!TIP]
+> [Showcase Video](TODO)
+
+## How to Use
+> [!IMPORTANT]
+> [Read the Wiki to Learn How to use Grasp](https://github.com/Vaei/Grasp/wiki/How-to-Use)
 
 ## Features
 
