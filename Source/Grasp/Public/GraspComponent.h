@@ -145,13 +145,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
 	TMap<FGameplayTag, UTargetingPreset*> GetTargetingPresets() const;
 
-	/**
-	 * Optionally override to return from an ability set instead
-	 * Interaction that doesn't grant an ability isn't supported
-	 * @warning This ability is a key for interaction mappings and must not change during runtime
-	 */
-	virtual const TSubclassOf<UGameplayAbility>& GetGraspAbility(const UGraspData* Data) const;
-
 	/** Find the ability data mapped to the ability class */
 	const FGraspAbilityData* GetGraspAbilityData(const TSubclassOf<UGameplayAbility>& Ability) const;
 	
@@ -180,10 +173,14 @@ public:
 	void GraspTargetsReady(const TArray<FGraspScanResult>& Results);
 
 	/** Extension point called after giving grasp ability */
-	virtual void PostGiveGraspAbility(const TSubclassOf<UGameplayAbility>& InAbility, FGraspAbilityData& InAbilityData) {}
+	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
+	void PostGiveGraspAbility(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
+	virtual void PostGiveGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData) {}
 
 	/** Extension point called before clearing grasp ability */
-	virtual void PreClearGraspAbility(const TSubclassOf<UGameplayAbility>& InAbility, FGraspAbilityData& InAbilityData) {}
+	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
+	void PreClearGraspAbility(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
+	virtual void PreClearGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData) {}
 
 	/** Extension point called before trying to activate the grasp ability */
 	virtual void PreTryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,

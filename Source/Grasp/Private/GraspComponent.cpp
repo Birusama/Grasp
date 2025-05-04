@@ -142,11 +142,6 @@ TMap<FGameplayTag, UTargetingPreset*> UGraspComponent::GetTargetingPresets_Imple
 	return DefaultTargetingPresets;
 }
 
-const TSubclassOf<UGameplayAbility>& UGraspComponent::GetGraspAbility(const UGraspData* Data) const
-{
-	return Data->GraspAbility;
-}
-
 const FGraspAbilityData* UGraspComponent::GetGraspAbilityData(const TSubclassOf<UGameplayAbility>& Ability) const
 {
 	return AbilityData.Find(Ability);
@@ -264,7 +259,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		const IGraspableComponent* Graspable = CastChecked<IGraspableComponent>(Component);
 
 		// No ability to grant
-		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Graspable->GetGraspData());
+		const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
 
 		// Add ability data
 		FGraspAbilityData& Data = AbilityData.FindOrAdd(Ability);
@@ -371,7 +366,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		}
 
 		// Get the ability to remove
-		const TSubclassOf<UGameplayAbility>& Ability = GetGraspAbility(Graspable->GetGraspData());
+		const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
 
 		// No ability to remove
 		if (!Ability)

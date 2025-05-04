@@ -53,7 +53,7 @@ bool UGraspFilter_Graspable::ShouldFilterTarget(const FTargetingRequestHandle& T
 	}
 
 	// No ability to grant
-	if (!GraspData->GraspAbility)
+	if (!GraspData->GetGraspAbility())
 	{
 		return true;
 	}

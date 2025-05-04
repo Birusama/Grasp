@@ -35,13 +35,19 @@ public:
 		, bGrantAbilityDistance2D(false)
 		, bGraspDistance2D(false)
 	{}
-	
+
+protected:
 	/**
 	 * The ability granted to the interactor,
 	 * Behaviour for the interactor when interacting with this data's owner
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp)
 	TSubclassOf<UGameplayAbility> GraspAbility;
+
+public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=Grasp)
+	TSubclassOf<UGameplayAbility> GetGraspAbility() const;
+	virtual TSubclassOf<UGameplayAbility> GetGraspAbility_Implementation() const;
 
 	/**
 	 * An optional property you can utilize to determine if the ability should be activable, or continue to be active, based on whether focus is lost

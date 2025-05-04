@@ -10,7 +10,7 @@
 /**
  * Granted ability data
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct GRASP_API FGraspAbilityData
 {
 	GENERATED_BODY()
@@ -21,13 +21,13 @@ struct GRASP_API FGraspAbilityData
 		, Ability(nullptr)
 	{}
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category=Grasp)
 	bool bPersistent;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category=Grasp)
 	FGameplayAbilitySpecHandle Handle;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category=Grasp)
 	TSubclassOf<UGameplayAbility> Ability;
 
 	/** Interactables that are in range and require this ability remain active */

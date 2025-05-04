@@ -34,7 +34,7 @@ FGameplayAbilitySpec* UGraspStatics::FindGraspAbilitySpec(const UAbilitySystemCo
 	const UPrimitiveComponent* GraspableComponent)
 {
 	const IGraspableComponent* Graspable = GraspableComponent ? CastChecked<IGraspableComponent>(GraspableComponent) : nullptr;
-	const TSubclassOf<UGameplayAbility>& GraspAbility = Graspable->GetGraspData()->GraspAbility;
+	const TSubclassOf<UGameplayAbility>& GraspAbility = Graspable->GetGraspData()->GetGraspAbility();
 	return ASC->FindAbilitySpecFromClass(GraspAbility);
 }
 

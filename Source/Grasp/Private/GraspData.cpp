@@ -2,6 +2,7 @@
 
 
 #include "GraspData.h"
+#include "Abilities/GameplayAbility.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -10,7 +11,13 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspData)
 
 
+TSubclassOf<UGameplayAbility> UGraspData::GetGraspAbility_Implementation() const
+{
+	return GraspAbility;
+}
+
 #if WITH_EDITOR
+
 void UGraspData::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
