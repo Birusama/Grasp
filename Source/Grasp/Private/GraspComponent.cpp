@@ -85,7 +85,7 @@ void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemCo
 					Data.bPersistent = true;  // Don't allow this to be removed
 
 					// Extension point
-					PostGiveGraspAbility(Ability, Data);
+					PostGiveCommonGraspAbility(Ability, Data);
 				}
 			}
 		
@@ -336,7 +336,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 			Data.Graspables.Add(Result.Graspable.Get());
 
 			// Extension point
-			PostGiveGraspAbility(Ability, Data);
+			PostGiveGraspAbility(Ability, Component, Graspable->GetGraspData(), Data);
 		}
 	}
 	
@@ -396,10 +396,10 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		}
 
 		// Are we (partially) responsible for this ability?
-		if (Data->Graspables.Contains(Result.Graspable.Get()))
+		if (Data->Graspables.Contains(Component))
 		{
 			// Remove our responsibility
-			Data->Graspables.Remove(Result.Graspable.Get());
+			Data->Graspables.Remove(Component);
 
 			// Remove any invalid graspables
 			Data->Graspables.RemoveAll([](const TWeakObjectPtr<const UPrimitiveComponent>& WeakGraspable)
@@ -425,7 +425,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 				// But what if something with the same ability exists in the current results?
 				// Cache the result and do it later, but only if still required
 				
-				PreClearGraspAbility(Ability, *Data);
+				PreClearGraspAbility(Ability, Graspable->GetGraspData(), *Data);
 				ASC->ClearAbility(Data->Handle);
 				AbilityData.Remove(Ability);
 			}
@@ -506,7 +506,14 @@ void UGraspComponent::ClearAllGrantedGameplayAbilities(bool bIncludeCommonAbilit
 
 		if (bIncludeCommonAbilities || !Data.bPersistent)
 		{
-			PreClearGraspAbility(Data.Ability, Data);
+			const TWeakObjectPtr<const UPrimitiveComponent>* ValidComponent = Data.Graspables.FindByPredicate(
+				[](const TWeakObjectPtr<const UPrimitiveComponent>& Graspable)
+				{
+					return Graspable.IsValid();
+				});
+			
+			const UGraspData* GraspData = ValidComponent ? CastChecked<IGraspableComponent>(ValidComponent->Get())->GetGraspData() : nullptr;
+			PreClearGraspAbility(Data.Ability, GraspData, Data);
 			ASC->ClearAbility(Data.Handle);
 			Data.Handle = FGameplayAbilitySpecHandle();
 			Data.Ability = nullptr;

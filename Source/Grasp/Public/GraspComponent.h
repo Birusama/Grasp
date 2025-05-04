@@ -174,13 +174,22 @@ public:
 
 	/** Extension point called after giving grasp ability */
 	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
-	void PostGiveGraspAbility(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
-	virtual void PostGiveGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData) {}
+	void PostGiveGraspAbility(TSubclassOf<UGameplayAbility> InAbility,
+		const UPrimitiveComponent* GraspableComponent, const UGraspData* GraspData, FGraspAbilityData& InAbilityData);
+	virtual void PostGiveGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
+		const UPrimitiveComponent* GraspableComponent, const UGraspData* GraspData, FGraspAbilityData& InAbilityData) {}
 
+	/** Extension point called after giving common grasp ability */
+	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
+	void PostGiveCommonGraspAbility(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
+	virtual void PostGiveCommonGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData) {}
+	
 	/** Extension point called before clearing grasp ability */
 	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
-	void PreClearGraspAbility(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
-	virtual void PreClearGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData) {}
+	void PreClearGraspAbility(TSubclassOf<UGameplayAbility> InAbility, const UGraspData* GraspData,
+		FGraspAbilityData& InAbilityData);
+	virtual void PreClearGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
+		const UGraspData* GraspData, FGraspAbilityData& InAbilityData) {}
 
 	/** Extension point called before trying to activate the grasp ability */
 	virtual void PreTryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
