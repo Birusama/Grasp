@@ -219,10 +219,7 @@ bool UGraspStatics::TryActivateGraspAbility(const AActor* SourceActor, UPrimitiv
 		}
 	}
 
-	// Assign the component as the source object -- not required with event data because we send as optional object
-	Spec->SourceObject = GraspableComponent;
-	ASC->MarkAbilitySpecDirty(*Spec);
-
+	// Try to activate the ability
 	if (ASC->TryActivateAbility(Spec->Handle, true))
 	{
 		GraspComponent->PostActivateGraspAbility(SourceActor, GraspableComponent, Source, Spec);
@@ -235,19 +232,6 @@ bool UGraspStatics::TryActivateGraspAbility(const AActor* SourceActor, UPrimitiv
 	}
 }
 
-UObject* UGraspStatics::GetGraspSourceObject(const UGameplayAbility* Ability)
-{
-	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::GetGraspSourceObject);
-	
-	// Don't use the built-in GetSourceObject() -- it expects we're instantiated, but we're not, we manually built this into the spec
-	const UAbilitySystemComponent* const ASC = Ability->GetAbilitySystemComponentFromActorInfo_Ensured();
-	if (const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Ability->GetCurrentAbilitySpecHandle()))
-	{
-		return Spec->SourceObject.IsValid() ? Spec->SourceObject.Get() : nullptr;
-	}
-	return nullptr;
-}
-
 const UObject* UGraspStatics::GetGraspObjectFromPayload(const FGameplayEventData& Payload)
 {
 	return Payload.OptionalObject;
@@ -257,13 +241,8 @@ const UPrimitiveComponent* UGraspStatics::K2_GetGraspableComponent(const UGamepl
 	FGameplayEventData Payload, TSubclassOf<UPrimitiveComponent> ComponentType)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::K2_GetGraspableComponent);
-	
-	const UObject* Object = GetGraspObjectFromPayload(Payload);
-	if (!Object)
-	{
-		Object = GetGraspSourceObject(Ability);
-	}
-	if (Object)
+
+	if (const UObject* Object = GetGraspObjectFromPayload(Payload))
 	{
 		if (Object->IsA(ComponentType))
 		{
@@ -277,13 +256,8 @@ const UPrimitiveComponent* UGraspStatics::K2_GetGraspablePrimitive(const UGamepl
 	FGameplayEventData Payload)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::K2_GetGraspablePrimitive);
-	
-	const UObject* Object = GetGraspObjectFromPayload(Payload);
-	if (!Object)
-	{
-		Object = GetGraspSourceObject(Ability);
-	}
-	if (Object)
+
+	if (const UObject* Object = GetGraspObjectFromPayload(Payload))
 	{
 		return Cast<UPrimitiveComponent>(Object);
 	}

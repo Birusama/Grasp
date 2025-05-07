@@ -65,5 +65,10 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.0.1
+* Stopped passing in source object -- breaking prediction
+	* Use EventData if you require the component we're interacting with (vs getting it from focus targeting)
+	* In the future the ability to grant multiple unique abilities with source objects may be added
+
 ### 1.0.0
 * Initial Release

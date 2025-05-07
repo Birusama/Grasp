@@ -62,7 +62,6 @@ public:
 	static bool TryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
 		EGraspAbilityComponentSource Source = EGraspAbilityComponentSource::EventData);
 
-	static UObject* GetGraspSourceObject(const UGameplayAbility* Ability);
 	static const UObject* GetGraspObjectFromPayload(const FGameplayEventData& Payload);
 	
 	/**
@@ -364,11 +363,6 @@ T* UGraspStatics::GetGraspableComponent(const UGameplayAbility* Ability, const F
 	if (const UObject* Obj = GetGraspObjectFromPayload(Payload))
 	{
 		return Cast<T>(Obj);
-	}
-
-	if (UObject* Source = GetGraspSourceObject(Ability))
-	{
-		return Cast<T>(Source);
 	}
 
 	return nullptr;
