@@ -259,6 +259,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(AdvancedDisplay="bEmptyData"))
 	void ClearAllGrantedGameplayAbilities(bool bIncludeCommonAbilities = false, bool bIncludeScanAbility = false, bool bEmptyData = false);
 
+public:
+	/**
+	 * This component's ability cannot be cleared until ability lock is removed
+	 * @return True if the ability lock was added
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	bool AddAbilityLock(const UPrimitiveComponent* GraspableComponent);
+
+	/**
+	 * Remove ability lock for this component so it's ability can now be cleared
+	 * @return True if the ability lock was removed
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp)
+	bool RemoveAbilityLock(const UPrimitiveComponent* GraspableComponent);
+	
 protected:
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	bool HasValidData() const;

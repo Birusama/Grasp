@@ -396,6 +396,18 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 			continue;
 		}
 
+		// Clear any weak null ability locks
+		Data->LockedGraspables.RemoveAll([](const TWeakObjectPtr<const UPrimitiveComponent>& WeakGraspable)
+		{
+			return !WeakGraspable.IsValid();
+		});
+
+		// If ability lock is in place, skip it
+		if (Data->LockedGraspables.Num() > 0)
+		{
+			continue;
+		}
+
 		// Has the ability already been removed?
 		if (!Data->Handle.IsValid())
 		{
@@ -612,6 +624,64 @@ void UGraspComponent::ClearAllGrantedGameplayAbilities(bool bIncludeCommonAbilit
 		// May cause frame loss
 		AbilityData.Empty();
 	}
+}
+
+bool UGraspComponent::AddAbilityLock(const UPrimitiveComponent* GraspableComponent)
+{
+	if (!IsValid(GraspableComponent))
+	{
+		return false;
+	}
+	
+	const IGraspableComponent* Graspable = Cast<IGraspableComponent>(GraspableComponent);
+	if (!Graspable || !Graspable->GetGraspData() || !Graspable->GetGraspData()->GetGraspAbility())
+	{
+		return false;
+	}
+
+	// Ability to grant
+	const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
+
+	// Add lock to ability data
+	if (FGraspAbilityData* Data = AbilityData.Find(Ability))
+	{
+		if (!Data->LockedGraspables.Contains(GraspableComponent))
+		{
+			Data->LockedGraspables.Add(GraspableComponent);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool UGraspComponent::RemoveAbilityLock(const UPrimitiveComponent* GraspableComponent)
+{
+	if (!IsValid(GraspableComponent))
+	{
+		return false;
+	}
+	
+	const IGraspableComponent* Graspable = Cast<IGraspableComponent>(GraspableComponent);
+	if (!Graspable || !Graspable->GetGraspData() || !Graspable->GetGraspData()->GetGraspAbility())
+	{
+		return false;
+	}
+
+	// Ability to grant
+	const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
+
+	// Remove lock from ability data
+	if (FGraspAbilityData* Data = AbilityData.Find(Ability))
+	{
+		if (Data->LockedGraspables.Contains(GraspableComponent))
+		{
+			Data->LockedGraspables.Remove(GraspableComponent);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool UGraspComponent::HasValidData() const

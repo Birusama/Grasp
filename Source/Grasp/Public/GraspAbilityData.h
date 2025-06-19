@@ -30,6 +30,10 @@ struct GRASP_API FGraspAbilityData
 	UPROPERTY(BlueprintReadOnly, Category=Grasp)
 	TSubclassOf<UGameplayAbility> Ability;
 
+	/** Interactables that have an ability lock, preventing the ability from being cleared */
+	UPROPERTY()
+	TArray<TWeakObjectPtr<const UPrimitiveComponent>> LockedGraspables;
+
 	/** Interactables that are in range and require this ability remain active */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<const UPrimitiveComponent>> Graspables;
