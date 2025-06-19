@@ -65,6 +65,16 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.0.2
+* Fixed bug with `UGraspFilter_Graspable::ShouldFilterTarget` using `CastChecked` instead of `Cast` causing crash with null interface (this was a copy/paste accident)
+* Fixed bug with ctor overwriting settings for graspable components
+	* Related to using `UGraspStatics::SetupGraspableComponentCollision`, has now been dumped in each header
+	* When changing collision profile settings post-component creation, it will no longer get overwritten
+* Added `UGraspEditorSettings` (`UDeveloperSettings`) for per-user config
+	* Added `bNotifyOnCollisionChanged` that spawns notification window when auto changing collision properties
+		* Silently changing settings was not ideal
+		* This is enabled by default, but you can now disable the notification
+
 ### 1.0.1
 * Stopped passing in source object -- breaking prediction
 	* Use EventData if you require the component we're interacting with (vs getting it from focus targeting)

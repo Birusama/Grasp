@@ -30,5 +30,18 @@ public class Grasp : ModuleRules
 				"UMG",
 			}
 			);
+		
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					// FSlateNotificationManager UGraspEditorDeveloper::bNotifyOnCollisionChanged
+					"UnrealEd",
+					"Slate",
+					"SlateCore",
+				}
+			);
+		}
 	}
 }

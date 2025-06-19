@@ -354,7 +354,7 @@ public:
 		APlayerController* PlayerController, bool& bSuccess, const UWidget* Widget = nullptr);
 	
 public:
-	static void SetupGraspableComponentCollision(UPrimitiveComponent* GraspableComponent);
+	static void OnGraspableComponentCollisionChanged(const UPrimitiveComponent* GraspableComponent, const FString& Context);
 };
 
 template <typename T>

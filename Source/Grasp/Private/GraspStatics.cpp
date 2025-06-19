@@ -27,6 +27,12 @@
 #include "Components/Widget.h"
 #include "Kismet/GameplayStatics.h"
 
+#if WITH_EDITOR
+#include "GraspEditorDeveloper.h"
+#include "Widgets/Notifications/SNotificationList.h"
+#include "Framework/Notifications/NotificationManager.h"
+#endif
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspStatics)
 
 
@@ -1015,29 +1021,26 @@ FVector2D UGraspStatics::GetScreenPositionForGraspableComponent(const UPrimitive
 	return ScreenPosition;
 }
 
-void UGraspStatics::SetupGraspableComponentCollision(UPrimitiveComponent* GraspableComponent)
+void UGraspStatics::OnGraspableComponentCollisionChanged(const UPrimitiveComponent* GraspableComponent,
+	const FString& Context)
 {
-	// if (IsValid(GraspableComponent))
+#if WITH_EDITOR
+	if (GetDefault<UGraspEditorDeveloper>()->bNotifyOnCollisionChanged)
 	{
-		// const bool bTemplate = GraspableComponent->IsTemplate();
-		// const bool bWorld = GraspableComponent->GetWorld() && !GraspableComponent->GetWorld()->IsGameWorld();
-		if (const UGraspDeveloper* GraspDeveloper = GetDefault<UGraspDeveloper>())
+		if (GraspableComponent)
 		{
-			switch (GraspDeveloper->GraspDefaultCollisionMode)
-			{
-			case EGraspDefaultCollisionMode::Profile:
-				GraspableComponent->BodyInstance.SetCollisionProfileName(GraspDeveloper->GraspDefaultCollisionProfile.Name);
-				break;
-			case EGraspDefaultCollisionMode::ObjectType:
-				GraspableComponent->BodyInstance.SetObjectType(GraspDeveloper->GraspDefaultObjectType);
-				if (GraspDeveloper->bSetDefaultOverlapChannel)
-				{
-					GraspableComponent->BodyInstance.SetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap);
-				}
-				break;
-			case EGraspDefaultCollisionMode::Disabled:
-				break;
-			}
+			// Use a notification window to inform the user about the collision change
+			const FString ContextString = Context.IsEmpty() ? Context : ": " + Context;
+			FNotificationInfo Info(FText::Format(
+				NSLOCTEXT("Grasp", "GraspableComponentCollisionChanged", "Collision changed for {0}{1}"),
+				FText::FromString(GraspableComponent->GetName()),
+				FText::FromString(ContextString)));
+
+			Info.ExpireDuration = 2.5f;
+			Info.bFireAndForget = true;
+
+			FSlateNotificationManager::Get().AddNotification(Info);
 		}
 	}
+#endif
 }
