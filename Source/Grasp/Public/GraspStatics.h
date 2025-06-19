@@ -47,6 +47,10 @@ public:
 	
 	/** 
 	 * Check CanActivateAbility()
+	 *
+	 * @param SourceActor The actor that holds the UGraspComponent (e.g. Controller), or that can locate the actor holding the component (e.g. Pawn, or PlayerState)
+	 * @param GraspableComponent The component that we are trying to interact with (Grasp)
+	 * @param Source The source from where grasp abilities retrieve the graspable component
 	 * @return True if the ability can be activated
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
@@ -57,6 +61,10 @@ public:
 	 * Use instead of TryActivateAbility, will set the SourceObject to the GraspableComponent
 	 * Optionally gathers target data from IGraspable::GatherOptionalGraspTargetData() and sends it to the ability
 	 * Use bAlwaysTriggerEvent if you want to check ShouldAbilityRespondToEvent() even if the target data is empty
+	 *
+	 * @param SourceActor The actor that holds the UGraspComponent (e.g. Controller), or that can locate the actor holding the component (e.g. Pawn, or PlayerState)
+	 * @param GraspableComponent The component that we are trying to interact with (Grasp)
+	 * @param Source The source from where grasp abilities retrieve the graspable component
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static bool TryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
@@ -352,9 +360,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	static FVector2D GetScreenPositionForGraspableComponent(const UPrimitiveComponent* GraspableComponent,
 		APlayerController* PlayerController, bool& bSuccess, const UWidget* Widget = nullptr);
-	
-public:
-	static void OnGraspableComponentCollisionChanged(const UPrimitiveComponent* GraspableComponent, const FString& Context);
 };
 
 template <typename T>

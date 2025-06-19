@@ -65,31 +65,7 @@ public:
 		PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
 		SetIsReplicatedByDefault(false);
 
-		// Change collision settings
-		if (const UGraspDeveloper* GraspDeveloper = GetDefault<UGraspDeveloper>())
-		{
-			switch (GraspDeveloper->GraspDefaultCollisionMode)
-			{
-			case EGraspDefaultCollisionMode::Profile:
-				BodyInstance.SetCollisionProfileName(GraspDeveloper->GraspDefaultCollisionProfile.Name);
-				UGraspStatics::OnGraspableComponentCollisionChanged(this, "ProfileName was changed to: " + GraspDeveloper->GraspDefaultCollisionProfile.Name.ToString());
-				break;
-			case EGraspDefaultCollisionMode::ObjectType:
-				BodyInstance.SetObjectType(GraspDeveloper->GraspDefaultObjectType);
-				if (GraspDeveloper->bSetDefaultOverlapChannel)
-				{
-					BodyInstance.SetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap);
-					UGraspStatics::OnGraspableComponentCollisionChanged(this, "ObjectType and default overlap channel changed");
-				}
-				else
-				{
-					UGraspStatics::OnGraspableComponentCollisionChanged(this, "ObjectType changed");
-				}
-				break;
-			case EGraspDefaultCollisionMode::Disabled:
-				break;
-			}
-		}
+		APPLY_GRASP_DEFAULT_COLLISION_SETTINGS(BodyInstance, GetName());
 
 		SetGenerateOverlapEvents(false);
 		CanCharacterStepUpOn = ECB_No;

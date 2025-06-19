@@ -57,3 +57,36 @@ public:
 	 */
 	virtual bool IsGraspableDead() const { return false; }
 };
+
+// Inheritance band-aid...
+#define APPLY_GRASP_DEFAULT_COLLISION_SETTINGS(BodyInstance, GetNameFunc) \
+if (const UGraspDeveloper* GraspDeveloper = GetDefault<UGraspDeveloper>()) \
+{ \
+	switch (GraspDeveloper->GraspDefaultCollisionMode) \
+	{ \
+	case EGraspDefaultCollisionMode::Profile: \
+		if (BodyInstance.GetCollisionProfileName() != GraspDeveloper->GraspDefaultCollisionProfile.Name) \
+		{ \
+			BodyInstance.SetCollisionProfileName(GraspDeveloper->GraspDefaultCollisionProfile.Name); \
+		} \
+		break; \
+	case EGraspDefaultCollisionMode::ObjectType: \
+		if (BodyInstance.GetObjectType() != GraspDeveloper->GraspDefaultObjectType) \
+		{ \
+			BodyInstance.SetObjectType(GraspDeveloper->GraspDefaultObjectType); \
+			if (GraspDeveloper->bSetDefaultOverlapChannel && \
+				BodyInstance.GetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel) != ECR_Overlap) \
+			{ \
+				BodyInstance.SetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap); \
+			} \
+		} \
+		else if (GraspDeveloper->bSetDefaultOverlapChannel && \
+				BodyInstance.GetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel) != ECR_Overlap) \
+		{ \
+			BodyInstance.SetResponseToChannel(GraspDeveloper->GraspDefaultOverlapChannel, ECR_Overlap); \
+		} \
+		break; \
+	case EGraspDefaultCollisionMode::Disabled: \
+		break; \
+	} \
+}

@@ -22,16 +22,9 @@
 #endif
 
 #include "GraspableOwner.h"
-#include "GraspDeveloper.h"
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "Components/Widget.h"
 #include "Kismet/GameplayStatics.h"
-
-#if WITH_EDITOR
-#include "GraspEditorDeveloper.h"
-#include "Widgets/Notifications/SNotificationList.h"
-#include "Framework/Notifications/NotificationManager.h"
-#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GraspStatics)
 
@@ -115,38 +108,50 @@ bool UGraspStatics::CanGraspActivateAbility(const AActor* SourceActor, const UPr
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::CanGraspActivateAbility);
 	
-	if (!GraspableComponent)
+	// Validate the SourceActor
+	if (!ensureMsgf(IsValid(SourceActor), TEXT("CanGraspActivateAbility: SourceActor is not valid")))
 	{
-		return false;
-	}
-
-	// Is this a graspable component?
-	if (!GraspableComponent->Implements<UGraspableComponent>())
-	{
-		UE_LOG(LogGrasp, Error, TEXT("CanGraspActivateAbility: Attempting to interact with an invalid component: %s belonging to %s"),
-			*GetNameSafe(GraspableComponent), *GetNameSafe(SourceActor));
-
 #if WITH_EDITOR
 		FMessageLog("PIE").Error()
-			->AddToken(FUObjectToken::Create(GraspableComponent))
-			->AddToken(FUObjectToken::Create(GraspableComponent->GetOwner()->GetClass()))
-			->AddToken(FTextToken::Create(FText::FromString(TEXT("Invalid Setup: Attempting to interact with an invalid component"))));
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("CanGraspActivateAbility: SourceActor is not valid"))));
 #endif
-		
 		return false;
 	}
-	
-	// Find the GraspComponent from the SourceActor
-	const UGraspComponent* GraspComponent = FindGraspComponentForActor(SourceActor);
-	if (!GraspComponent)
+
+	// Validate the GraspableComponent
+	if (!ensureMsgf(GraspableComponent, TEXT("CanGraspActivateAbility: GraspableComponent is not valid")))
 	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(SourceActor->GetClass()->GetDefaultObject()))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("CanGraspActivateAbility:: GraspableComponent is not valid"))));
+#endif
+		return false;
+	}
+
+	// Find the grasp component (from the SourceActor's Controller)
+	UGraspComponent* GraspComponent = FindGraspComponentForActor(SourceActor);
+	if (!ensureMsgf(GraspComponent, TEXT("CanGraspActivateAbility: Could not find GraspComponent for SourceActor: %s"), *GetNameSafe(SourceActor)))
+	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(SourceActor->GetClass()->GetDefaultObject()))
+			->AddToken(FUObjectToken::Create(GraspableComponent->GetClass()->GetDefaultObject()))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("CanGraspActivateAbility: Could not find GraspComponent for SourceActor"))));
+#endif
 		return false;
 	}
 
 	// Get the ASC from the GraspComponent
 	const UAbilitySystemComponent* ASC = GraspComponent->GetASC();
-	if (!ASC)
+	if (!ensureMsgf(ASC, TEXT("CanGraspActivateAbility: Could not find AbilitySystemComponent for SourceActor: %s"), *GetNameSafe(SourceActor)))
 	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(SourceActor))
+			->AddToken(FUObjectToken::Create(GraspableComponent))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("CanGraspActivateAbility: Could not find AbilitySystemComponent for SourceActor"))));
+#endif
 		return false;
 	}
 	
@@ -176,18 +181,51 @@ bool UGraspStatics::TryActivateGraspAbility(const AActor* SourceActor, UPrimitiv
 	EGraspAbilityComponentSource Source)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspStatics::TryActivateGraspAbility);
-	
+
+	// Validate the SourceActor
+	if (!ensureMsgf(IsValid(SourceActor), TEXT("TryActivateGraspAbility: SourceActor is not valid")))
+	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("TryActivateGraspAbility: SourceActor is not valid"))));
+#endif
+		return false;
+	}
+
+	// Validate the GraspableComponent
+	if (!ensureMsgf(GraspableComponent, TEXT("TryActivateGraspAbility: GraspableComponent is not valid")))
+	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(SourceActor->GetClass()->GetDefaultObject()))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("TryActivateGraspAbility:: GraspableComponent is not valid"))));
+#endif
+		return false;
+	}
+
 	// Find the grasp component (from the SourceActor's Controller)
 	UGraspComponent* GraspComponent = FindGraspComponentForActor(SourceActor);
-	if (!GraspComponent)
+	if (!ensureMsgf(GraspComponent, TEXT("TryActivateGraspAbility: Could not find GraspComponent for SourceActor: %s"), *GetNameSafe(SourceActor)))
 	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(SourceActor->GetClass()->GetDefaultObject()))
+			->AddToken(FUObjectToken::Create(GraspableComponent->GetClass()->GetDefaultObject()))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("TryActivateGraspAbility: Could not find GraspComponent for SourceActor"))));
+#endif
 		return false;
 	}
 
 	// Get the ASC from the GraspComponent
 	UAbilitySystemComponent* ASC = GraspComponent->GetASC();
-	if (!ASC)
+	if (!ensureMsgf(ASC, TEXT("TryActivateGraspAbility: Could not find AbilitySystemComponent for SourceActor: %s"), *GetNameSafe(SourceActor)))
 	{
+#if WITH_EDITOR
+		FMessageLog("PIE").Error()
+			->AddToken(FUObjectToken::Create(SourceActor))
+			->AddToken(FUObjectToken::Create(GraspableComponent))
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("TryActivateGraspAbility: Could not find AbilitySystemComponent for SourceActor"))));
+#endif
 		return false;
 	}
 
@@ -1019,28 +1057,4 @@ FVector2D UGraspStatics::GetScreenPositionForGraspableComponent(const UPrimitive
 	}
 
 	return ScreenPosition;
-}
-
-void UGraspStatics::OnGraspableComponentCollisionChanged(const UPrimitiveComponent* GraspableComponent,
-	const FString& Context)
-{
-#if WITH_EDITOR
-	if (GetDefault<UGraspEditorDeveloper>()->bNotifyOnCollisionChanged)
-	{
-		if (GraspableComponent)
-		{
-			// Use a notification window to inform the user about the collision change
-			const FString ContextString = Context.IsEmpty() ? Context : ": " + Context;
-			FNotificationInfo Info(FText::Format(
-				NSLOCTEXT("Grasp", "GraspableComponentCollisionChanged", "Collision changed for {0}{1}"),
-				FText::FromString(GraspableComponent->GetName()),
-				FText::FromString(ContextString)));
-
-			Info.ExpireDuration = 2.5f;
-			Info.bFireAndForget = true;
-
-			FSlateNotificationManager::Get().AddNotification(Info);
-		}
-	}
-#endif
 }

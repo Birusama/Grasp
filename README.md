@@ -65,6 +65,15 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.0.3
+_Do not remain on 1.0.2 -- UHT causing issues with graspable components, the changes were band-aiding this unnecessarily and a lot have been rolled back_
+
+* Fix uht weirdness causing ctor to overwrite post-ctor changes
+* Removed notifications, somewhat redundant now that ctor is acting appropriately, and triggering notifications from ctor does not behave as intended
+* Improve `CanGraspActivateAbility` and `TryActivateGraspAbility`
+	* Should not fail silently in cases of user error
+	* Add parameter tooltips to make input requirements clear
+
 ### 1.0.2
 * Fixed bug with `UGraspFilter_Graspable::ShouldFilterTarget` using `CastChecked` instead of `Cast` causing crash with null interface (this was a copy/paste accident)
 * Fixed bug with ctor overwriting settings for graspable components
