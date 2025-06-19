@@ -258,7 +258,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		const UPrimitiveComponent* Component = Result.Graspable.IsValid() ? Result.Graspable.Get() : nullptr;
 		const IGraspableComponent* Graspable = CastChecked<IGraspableComponent>(Component);
 
-		// No ability to grant
+		// Ability to grant
 		const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
 
 		// Add ability data
@@ -360,7 +360,14 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 		const IGraspableComponent* Graspable = CastChecked<IGraspableComponent>(Component);
 
 		// No data to retrieve ability from
-		if (!Graspable->GetGraspData())
+		const UGraspData* GraspData = Graspable->GetGraspData();
+		if (!GraspData)
+		{
+			continue;
+		}
+		
+		// If this ability is marked for manual clearing, skip it
+		if (GraspData->bManualClearAbility)
 		{
 			continue;
 		}
@@ -493,6 +500,77 @@ void UGraspComponent::EndTargetingRequests(const FGameplayTag& PresetTag, bool b
 	{
 		(void)OnRequestGrasp.ExecuteIfBound();
 	}
+}
+
+bool UGraspComponent::ClearGrantedGameplayAbility(const TSubclassOf<UGameplayAbility>& InAbility, bool bIgnoreInRange)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::ClearGrantedGameplayAbility);
+	
+	if (!InAbility)
+	{
+		return false;
+	}
+
+	FGraspAbilityData* Data = AbilityData.Find(InAbility);
+	if (!Data || !Data->Handle.IsValid())
+	{
+		// No ability to clear
+		return false;
+	}
+
+	// If this is a common ability, we don't clear it
+	if (Data->bPersistent)
+	{
+		return false;
+	}
+
+	// Don't clear if anything is in range that has this ability
+	if (bIgnoreInRange)
+	{
+		// Anything in current scan results is in range, if it has the ability we are looking for
+		for (const FGraspScanResult& Result : CurrentScanResults)
+		{
+			// We have already filtered for these
+			const UPrimitiveComponent* Component = Result.Graspable.IsValid() ? Result.Graspable.Get() : nullptr;
+			const IGraspableComponent* Graspable = CastChecked<IGraspableComponent>(Component);
+
+			// Ability to grant via data
+			const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
+			if (Ability != InAbility)
+			{
+				// Not the ability we are looking for
+				continue;
+			}
+
+			// If this is the ability we are looking for, and it is in range, don't clear it
+			return false;
+		}
+	}
+
+	PreClearGraspAbility(InAbility, nullptr, *Data);
+	
+	ASC->ClearAbility(Data->Handle);
+	AbilityData.Remove(InAbility);
+
+	return true;
+}
+
+bool UGraspComponent::ClearGrantedGameplayAbilityForComponent(const UPrimitiveComponent* GraspableComponent,
+	bool bIgnoreInRange)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::ClearGrantedGameplayAbilityForComponent);
+	
+	// We have already filtered for these
+	const IGraspableComponent* Graspable = CastChecked<IGraspableComponent>(GraspableComponent);
+
+	// Ability to grant via data
+	const TSubclassOf<UGameplayAbility>& Ability = Graspable->GetGraspData()->GetGraspAbility();
+	if (Ability)
+	{
+		return ClearGrantedGameplayAbility(Ability, bIgnoreInRange);
+	}
+
+	return false;
 }
 
 void UGraspComponent::ClearAllGrantedGameplayAbilities(bool bIncludeCommonAbilities, bool bIncludeScanAbility, bool bEmptyData)

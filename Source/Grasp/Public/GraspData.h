@@ -32,6 +32,7 @@ public:
 		, NormalizedGrantAbilityDistance(0.7f)
 		, AuthNetToleranceAnglePct(10.f)
 		, AuthNetToleranceDistancePct(10.f)
+		, bManualClearAbility(false)
 		, bGrantAbilityDistance2D(false)
 		, bGraspDistance2D(false)
 	{}
@@ -125,6 +126,10 @@ public:
 	 * @return 1.f + (AuthNetToleranceDistancePct / 100.f)
 	 */
 	float GetAuthNetToleranceDistanceScalar() const { return 1.f + (AuthNetToleranceDistancePct / 100.f); }
+
+	/** If true, abilities will not automatically be cleared when distance exceeds MaxGraspDistance */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Grasp)
+	bool bManualClearAbility;
 	
 	/**
 	 * Use 2D distance checks for granting the ability

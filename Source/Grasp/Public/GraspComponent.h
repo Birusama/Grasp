@@ -229,6 +229,26 @@ public:
 	}
 
 	/**
+	 * Clear the granted gameplay ability
+	 *
+	 * @param Ability The ability to clear
+	 * @param bIgnoreInRange If true, will ignore abilities that are currently in range of any Graspable components, i.e. they will typically be re-granted next frame
+	 * @return True if the ability was cleared
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(AdvancedDisplay="bIgnoreInRange"))
+	bool ClearGrantedGameplayAbility(const TSubclassOf<UGameplayAbility>& Ability, bool bIgnoreInRange = true);
+
+	/**
+	 * Clear the granted gameplay ability for a specific Graspable component
+	 * 
+	 * @param GraspableComponent The component to clear the ability for
+	 * @param bIgnoreInRange If true, will ignore abilities that are currently in range of the Graspable component, i.e. they will typically be re-granted next frame
+	 * @return True if the ability was cleared
+	 */
+	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(AdvancedDisplay="bIgnoreInRange"))
+	bool ClearGrantedGameplayAbilityForComponent(const UPrimitiveComponent* GraspableComponent, bool bIgnoreInRange = true);
+	
+	/**
 	 * Call to clear all granted gameplay abilities
 	 * Might be worthwhile before pausing Grasp
 	 * @note Data can only be emptied if bIncludeCommonAbilities is true
