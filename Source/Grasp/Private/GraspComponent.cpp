@@ -727,6 +727,22 @@ bool UGraspComponent::RemoveAbilityLock(const UPrimitiveComponent* GraspableComp
 		if (Data->LockedGraspables.Contains(GraspableComponent))
 		{
 			Data->LockedGraspables.Remove(GraspableComponent);
+
+			// If this is the last locked graspable, we can remove the ability, if it isn't in range
+			if (Data->LockedGraspables.Num() == 0)
+			{
+				if (!IsGrantedGameplayAbilityInRange(Ability))
+				{
+					// Clear the ability
+					const UGraspData* GraspData = Graspable->GetGraspData();
+					PreClearGraspAbility(Data->Ability, GraspData, *Data);
+					ASC->ClearAbility(Data->Handle);
+					Data->Handle = FGameplayAbilitySpecHandle();
+					Data->Ability = nullptr;
+					AbilityData.Remove(Ability);
+				}
+			}
+			
 			return true;
 		}
 	}
