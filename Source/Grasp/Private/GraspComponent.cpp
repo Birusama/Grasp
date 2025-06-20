@@ -74,13 +74,14 @@ void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemCo
 			// Pre-grant common grasp abilities
 			for (const TSubclassOf<UGameplayAbility>& Ability : CommonGraspAbilities)
 			{
-				FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1,
-					INDEX_NONE, this));
+				FGameplayAbilitySpec Spec = FGameplayAbilitySpec(Ability, 1,INDEX_NONE, this);
+				FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
 			
 				if (ensure(Handle.IsValid()))
 				{
 					FGraspAbilityData& Data = AbilityData.FindOrAdd(Ability);
 					Data.Handle = Handle;
+					Data.Spec = Spec;
 					Data.Ability = Ability;
 					Data.bPersistent = true;  // Don't allow this to be removed
 
@@ -332,6 +333,7 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 #endif
 			
 			Data.Handle = Handle;
+			Data.Spec = Spec;
 			Data.Ability = Ability;
 			Data.Graspables.Add(Result.Graspable.Get());
 
@@ -704,6 +706,7 @@ void UGraspComponent::ClearAllGrantedGameplayAbilities(bool bClearCommonAbilitie
 		PreClearGraspAbility(Data.Ability, GraspData, Data);
 		ASC->ClearAbility(Data.Handle);
 		Data.Handle = FGameplayAbilitySpecHandle();
+		Data.Spec = FGameplayAbilitySpec();
 		Data.Ability = nullptr;
 	}
 
@@ -792,6 +795,7 @@ bool UGraspComponent::RemoveAbilityLock(const UPrimitiveComponent* GraspableComp
 					PreClearGraspAbility(Data->Ability, GraspData, *Data);
 					ASC->ClearAbility(Data->Handle);
 					Data->Handle = FGameplayAbilitySpecHandle();
+					Data->Spec = FGameplayAbilitySpec();
 					Data->Ability = nullptr;
 					AbilityData.Remove(Ability);
 				}

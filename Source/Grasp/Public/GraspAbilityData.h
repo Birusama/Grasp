@@ -28,6 +28,9 @@ struct GRASP_API FGraspAbilityData
 	FGameplayAbilitySpecHandle Handle;
 
 	UPROPERTY(BlueprintReadOnly, Category=Grasp)
+	FGameplayAbilitySpec Spec;
+
+	UPROPERTY(BlueprintReadOnly, Category=Grasp)
 	TSubclassOf<UGameplayAbility> Ability;
 
 	/** Interactables that have an ability lock, preventing the ability from being cleared */
