@@ -514,7 +514,7 @@ void UGraspComponent::EndTargetingRequests(const FGameplayTag& PresetTag, bool b
 	}
 }
 
-bool UGraspComponent::IsGrantedGameplayAbilityInRange(const TSubclassOf<UGameplayAbility>& InAbility) const
+bool UGraspComponent::IsGrantedGameplayAbilityInRange(TSubclassOf<UGameplayAbility> InAbility) const
 {
 	// Anything in current scan results is in range, if it has the ability we are looking for
 	for (const FGraspScanResult& Result : CurrentScanResults)
@@ -533,7 +533,7 @@ bool UGraspComponent::IsGrantedGameplayAbilityInRange(const TSubclassOf<UGamepla
 	return false;
 }
 
-bool UGraspComponent::ClearGrantedGameplayAbility(const TSubclassOf<UGameplayAbility>& InAbility, bool bClearAbilitiesInRange,
+bool UGraspComponent::ClearGrantedGameplayAbility(TSubclassOf<UGameplayAbility> InAbility, bool bClearAbilitiesInRange,
 	bool bClearLockedAbilities)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::ClearGrantedGameplayAbility);

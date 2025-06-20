@@ -236,7 +236,7 @@ public:
 	 * @return True if the ability is currently in range
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
-	bool IsGrantedGameplayAbilityInRange(const TSubclassOf<UGameplayAbility>& Ability) const;
+	bool IsGrantedGameplayAbilityInRange(TSubclassOf<UGameplayAbility> Ability) const;
 
 	/**
 	 * Clear the granted gameplay ability
@@ -247,7 +247,7 @@ public:
 	 * @return True if the ability was cleared
 	 */
 	UFUNCTION(BlueprintCallable, Category=Grasp, meta=(AdvancedDisplay="bIgnoreInRange"))
-	bool ClearGrantedGameplayAbility(const TSubclassOf<UGameplayAbility>& Ability, bool bClearAbilitiesInRange = false, bool bClearLockedAbilities = false);
+	bool ClearGrantedGameplayAbility(TSubclassOf<UGameplayAbility> Ability, bool bClearAbilitiesInRange = false, bool bClearLockedAbilities = false);
 
 	/**
 	 * Clear the granted gameplay ability for a specific Graspable component
