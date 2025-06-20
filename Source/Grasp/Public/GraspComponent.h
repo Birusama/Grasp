@@ -115,6 +115,31 @@ protected:
 public:
 	UAbilitySystemComponent* GetASC() { return ASC.IsValid() ? ASC.Get() : nullptr; }
 	const UAbilitySystemComponent* GetASC() const { return ASC.IsValid() ? ASC.Get() : nullptr; }
+
+public:
+	/** Extension point called after giving grasp ability */
+	UPROPERTY(BlueprintAssignable, Category=Grasp)
+	FOnPostGiveGraspAbility OnPostGiveGraspAbility;
+	
+	/** Extension point called after giving common grasp ability */
+	UPROPERTY(BlueprintAssignable, Category=Grasp)
+	FOnPostGiveCommonGraspAbility OnPostGiveCommonGraspAbility;
+
+	/** Extension point called before clearing grasp ability */
+	UPROPERTY(BlueprintAssignable, Category=Grasp)
+	FOnPreClearGraspAbility OnPreClearGraspAbility;
+
+	/** Extension point called before trying to activate the grasp ability */
+	UPROPERTY(BlueprintAssignable, Category=Grasp)
+	FOnPreTryActivateGraspAbility OnPreTryActivateGraspAbility;
+
+	/** Extension point called after successfully activating the grasp ability */
+	UPROPERTY(BlueprintAssignable, Category=Grasp)
+	FOnPostActivateGraspAbility OnPostActivateGraspAbility;
+
+	/** Extension point called after failing to activate the grasp ability */
+	UPROPERTY(BlueprintAssignable, Category=Grasp)
+	FOnPostFailedActivateGraspAbility OnPostFailedActivateGraspAbility;
 	
 public:
 	UGraspComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
@@ -176,33 +201,36 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
 	void PostGiveGraspAbility(TSubclassOf<UGameplayAbility> InAbility,
 		const UPrimitiveComponent* GraspableComponent, const UGraspData* GraspData, FGraspAbilityData& InAbilityData);
+	
 	virtual void PostGiveGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
-		const UPrimitiveComponent* GraspableComponent, const UGraspData* GraspData, FGraspAbilityData& InAbilityData) {}
+		const UPrimitiveComponent* GraspableComponent, const UGraspData* GraspData, FGraspAbilityData& InAbilityData);
 
 	/** Extension point called after giving common grasp ability */
 	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
 	void PostGiveCommonGraspAbility(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
-	virtual void PostGiveCommonGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData) {}
 	
+	virtual void PostGiveCommonGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility, FGraspAbilityData& InAbilityData);
+
 	/** Extension point called before clearing grasp ability */
 	UFUNCTION(BlueprintNativeEvent, Category=Grasp)
 	void PreClearGraspAbility(TSubclassOf<UGameplayAbility> InAbility, const UGraspData* GraspData,
 		FGraspAbilityData& InAbilityData);
+	
 	virtual void PreClearGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
-		const UGraspData* GraspData, FGraspAbilityData& InAbilityData) {}
+		const UGraspData* GraspData, FGraspAbilityData& InAbilityData);
 
 	/** Extension point called before trying to activate the grasp ability */
 	virtual void PreTryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
-		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec) {}
+		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec);
 
 	/** Extension point called after successfully activating the grasp ability */
 	virtual void PostActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
-		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo = nullptr) {}
+		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo = nullptr);
 
 	/** Extension point called after failing to activate the grasp ability */
 	virtual void PostFailedActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
-		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo = nullptr) {}
-	
+		EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo = nullptr);
+
 	/** Pause or resume Grasp */
 	UFUNCTION(BlueprintCallable, Category=Grasp)
 	void PauseGrasp(bool bPaused, bool bEndTargetingRequestsOnPause = true);

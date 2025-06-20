@@ -458,6 +458,60 @@ void UGraspComponent::GraspTargetsReady(const TArray<FGraspScanResult>& Results)
 	}
 }
 
+void UGraspComponent::PostGiveGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
+	const UPrimitiveComponent* GraspableComponent, const UGraspData* GraspData, FGraspAbilityData& InAbilityData)
+{
+	if (OnPostGiveGraspAbility.IsBound())
+	{
+		OnPostGiveGraspAbility.Broadcast(this, InAbility, GraspableComponent, GraspData, InAbilityData);
+	}
+}
+
+void UGraspComponent::PostGiveCommonGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
+	FGraspAbilityData& InAbilityData)
+{
+	if (OnPostGiveCommonGraspAbility.IsBound())
+	{
+		OnPostGiveCommonGraspAbility.Broadcast(this, InAbility, InAbilityData);
+	}
+}
+
+void UGraspComponent::PreClearGraspAbility_Implementation(TSubclassOf<UGameplayAbility> InAbility,
+	const UGraspData* GraspData, FGraspAbilityData& InAbilityData)
+{
+	if (OnPreClearGraspAbility.IsBound())
+	{
+		OnPreClearGraspAbility.Broadcast(this, InAbility, GraspData, InAbilityData);
+	}
+}
+
+void UGraspComponent::PreTryActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+	EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec)
+{
+	if (OnPreTryActivateGraspAbility.IsBound())
+	{
+		OnPreTryActivateGraspAbility.Broadcast(this, SourceActor, GraspableComponent, Source, *InSpec);
+	}
+}
+
+void UGraspComponent::PostActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+	EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo)
+{
+	if (OnPostActivateGraspAbility.IsBound())
+	{
+		OnPostActivateGraspAbility.Broadcast(this, SourceActor, GraspableComponent, Source, *InSpec, *ActorInfo);
+	}
+}
+
+void UGraspComponent::PostFailedActivateGraspAbility(const AActor* SourceActor, UPrimitiveComponent* GraspableComponent,
+	EGraspAbilityComponentSource Source, FGameplayAbilitySpec* InSpec, FGameplayAbilityActorInfo* ActorInfo)
+{
+	if (OnPostFailedActivateGraspAbility.IsBound())
+	{
+		OnPostFailedActivateGraspAbility.Broadcast(this, SourceActor, GraspableComponent, Source, *InSpec, *ActorInfo);
+	}
+}
+
 void UGraspComponent::PauseGrasp(bool bPaused, bool bEndTargetingRequestsOnPause)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::PauseGrasp);

@@ -10,8 +10,42 @@ class UGraspComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogGrasp, Log, All);
 
+/**
+ * How Grasp abilities retrieve their GraspableComponent
+ * Determine what checks are done from the ability
+ */
+UENUM(BlueprintType)
+enum class EGraspAbilityComponentSource : uint8
+{
+	EventData		UMETA(ToolTip="Send the GraspableComponent along with the event data. Results in ShouldAbilityRespondToEvent() and ActivateAbilityFromEvent()"),
+	Automatic		UMETA(ToolTip="Send EventData if GraspableComponent has optional target data. @see IGraspable::GatherOptionalGraspTargetData()"),
+	Custom			UMETA(ToolTip="Unimplemented -- use a focus system or similar to determine which GraspableComponent we're interacting with. Results in ActivateAbility()"),
+};
+
 DECLARE_DELEGATE_OneParam(FOnPauseGrasp, bool /* bIsPaused */);
 DECLARE_DELEGATE(FOnRequestGrasp);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnPostGiveGraspAbility, UGraspComponent*, GraspComponent,
+	TSubclassOf<UGameplayAbility>, Ability, const UPrimitiveComponent*, GraspableComponent,
+	const UGraspData*, GraspData, const FGraspAbilityData&, AbilityData);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnPostGiveCommonGraspAbility, UGraspComponent*, GraspComponent,
+	TSubclassOf<UGameplayAbility>, Ability, const FGraspAbilityData&, AbilityData);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnPreClearGraspAbility, UGraspComponent*, GraspComponent,
+	TSubclassOf<UGameplayAbility>, Ability, const UGraspData*, GraspData, const FGraspAbilityData&, AbilityData);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnPreTryActivateGraspAbility, UGraspComponent*, GraspComponent,
+	const AActor*, SourceActor, UPrimitiveComponent*, GraspableComponent,EGraspAbilityComponentSource, Source,
+	const FGameplayAbilitySpec&, AbilitySpec);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnPostActivateGraspAbility, UGraspComponent*, GraspComponent,
+	const AActor*, SourceActor, UPrimitiveComponent*, GraspableComponent, EGraspAbilityComponentSource, Source,
+	const FGameplayAbilitySpec&, AbilitySpec, const FGameplayAbilityActorInfo&, ActorInfo);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnPostFailedActivateGraspAbility, UGraspComponent*, GraspComponent,
+	const AActor*, SourceActor, UPrimitiveComponent*, GraspableComponent, EGraspAbilityComponentSource, Source,
+	const FGameplayAbilitySpec&, AbilitySpec, const FGameplayAbilityActorInfo&, ActorInfo);
 
 UENUM(BlueprintType)
 enum class EGraspTargetingSource : uint8
@@ -42,18 +76,6 @@ enum class EGraspFocusMode : uint8
 	None 			UMETA(ToolTip="Does not require focus to interact"),
 	Focus			UMETA(ToolTip="Requires focus to interact"),
 	FocusAlways		UMETA(ToolTip="Requires focus to interact and ability will end if focus is lost"),
-};
-
-/**
- * How Grasp abilities retrieve their GraspableComponent
- * Determine what checks are done from the ability
- */
-UENUM(BlueprintType)
-enum class EGraspAbilityComponentSource : uint8
-{
-	EventData		UMETA(ToolTip="Send the GraspableComponent along with the event data. Results in ShouldAbilityRespondToEvent() and ActivateAbilityFromEvent()"),
-	Automatic		UMETA(ToolTip="Send EventData if GraspableComponent has optional target data. @see IGraspable::GatherOptionalGraspTargetData()"),
-	Custom			UMETA(ToolTip="Unimplemented -- use a focus system or similar to determine which GraspableComponent we're interacting with. Results in ActivateAbility()"),
 };
 
 UENUM(BlueprintType)
