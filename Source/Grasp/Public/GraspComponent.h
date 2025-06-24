@@ -6,6 +6,7 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayTagContainer.h"
 #include "GraspAbilityData.h"
+#include "GraspDelegates.h"
 #include "GraspTags.h"
 #include "GraspTypes.h"
 #include "Components/ActorComponent.h"

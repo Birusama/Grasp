@@ -22,31 +22,6 @@ enum class EGraspAbilityComponentSource : uint8
 	Custom			UMETA(ToolTip="Unimplemented -- use a focus system or similar to determine which GraspableComponent we're interacting with. Results in ActivateAbility()"),
 };
 
-DECLARE_DELEGATE_OneParam(FOnPauseGrasp, bool /* bIsPaused */);
-DECLARE_DELEGATE(FOnRequestGrasp);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnPostGiveGraspAbility, UGraspComponent*, GraspComponent,
-	TSubclassOf<UGameplayAbility>, Ability, const UPrimitiveComponent*, GraspableComponent,
-	const UGraspData*, GraspData, const FGraspAbilityData&, AbilityData);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnPostGiveCommonGraspAbility, UGraspComponent*, GraspComponent,
-	TSubclassOf<UGameplayAbility>, Ability, const FGraspAbilityData&, AbilityData);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnPreClearGraspAbility, UGraspComponent*, GraspComponent,
-	TSubclassOf<UGameplayAbility>, Ability, const UGraspData*, GraspData, const FGraspAbilityData&, AbilityData);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnPreTryActivateGraspAbility, UGraspComponent*, GraspComponent,
-	const AActor*, SourceActor, UPrimitiveComponent*, GraspableComponent,EGraspAbilityComponentSource, Source,
-	const FGameplayAbilitySpec&, AbilitySpec);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnPostActivateGraspAbility, UGraspComponent*, GraspComponent,
-	const AActor*, SourceActor, UPrimitiveComponent*, GraspableComponent, EGraspAbilityComponentSource, Source,
-	const FGameplayAbilitySpec&, AbilitySpec, const FGameplayAbilityActorInfo&, ActorInfo);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnPostFailedActivateGraspAbility, UGraspComponent*, GraspComponent,
-	const AActor*, SourceActor, UPrimitiveComponent*, GraspableComponent, EGraspAbilityComponentSource, Source,
-	const FGameplayAbilitySpec&, AbilitySpec, const FGameplayAbilityActorInfo&, ActorInfo);
-
 UENUM(BlueprintType)
 enum class EGraspTargetingSource : uint8
 {
