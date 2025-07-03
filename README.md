@@ -65,6 +65,13 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.1.0
+* Added delegates for ability pre/post clear/grant and other events that were previously available only as virtual functions
+* Added ability locking system - locked abilities do not get automatically cleared until unlocked, see `UGraspStatics::` `AddGraspAbilityLock()` and `RemoveGraspAbilityLock()`
+* Can manually clear abilities, see `ClearGrantedGameplayAbility()`, `ClearGrantedGameplayAbilityForComponent()`
+* AbilitySpec is now cached to `FGraspAbilityData`
+* Improved user setup error reporting if you forgot to call `InitializeGrasp()`
+
 ### 1.0.3
 _Do not remain on 1.0.2 -- UHT causing issues with graspable components, the changes were band-aiding this unnecessarily and a lot have been rolled back_
 
