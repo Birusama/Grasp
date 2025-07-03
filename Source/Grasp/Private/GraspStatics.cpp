@@ -150,7 +150,7 @@ bool UGraspStatics::CanGraspActivateAbility(const AActor* SourceActor, const UPr
 		FMessageLog("PIE").Error()
 			->AddToken(FUObjectToken::Create(SourceActor))
 			->AddToken(FUObjectToken::Create(GraspableComponent))
-			->AddToken(FTextToken::Create(FText::FromString(TEXT("CanGraspActivateAbility: Could not find AbilitySystemComponent for SourceActor"))));
+			->AddToken(FTextToken::Create(FText::FromString(TEXT("CanGraspActivateAbility: Could not find AbilitySystemComponent for SourceActor - Did you call InitializeGrasp()?"))));
 #endif
 		return false;
 	}
