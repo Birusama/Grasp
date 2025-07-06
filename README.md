@@ -65,6 +65,9 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.1.1
+* Fix struct not initializing properties in ctor
+
 ### 1.1.0
 * Added delegates for ability pre/post clear/grant and other events that were previously available only as virtual functions
 * Added ability locking system - locked abilities do not get automatically cleared until unlocked, see `UGraspStatics::` `AddGraspAbilityLock()` and `RemoveGraspAbilityLock()`

@@ -9,6 +9,8 @@
 
 
 FRootMotionSource_GraspFaceTowards::FRootMotionSource_GraspFaceTowards()
+	: StartDirection(FVector::ZeroVector)
+	, TargetDirection(FVector::ZeroVector)
 {
 	// Disable Partial End Tick
 	// Otherwise we end up with very inconsistent velocities on the last frame.
