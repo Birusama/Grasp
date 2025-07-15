@@ -530,9 +530,18 @@ ENetMode UGraspScanTask::GetOwnerNetMode() const
 
 FString UGraspScanTask::GetRoleString() const
 {
-	if (GetOwnerNetMode() == NM_Standalone || GetOwnerNetMode() == NM_MAX)
+	switch (GetOwnerNetMode())
 	{
-		return TEXT("");
+	case NM_DedicatedServer:
+	case NM_ListenServer: return TEXT("Auth");
+	case NM_Client:
+#if WITH_EDITOR
+		if (Ability->GetCurrentActorInfo()->AvatarActor.IsValid())
+		{
+			return GetDebugStringForWorld(Ability->GetCurrentActorInfo()->AvatarActor->GetWorld());
+		}
+#endif
+		return TEXT("Client");
+	default: return TEXT("");
 	}
-	return Ability->GetCurrentActorInfo()->IsNetAuthority() ? TEXT("[ Auth ]") : TEXT("[ Client ]");
 }
