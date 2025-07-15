@@ -54,7 +54,7 @@ UGraspScanTask::UGraspScanTask(const FObjectInitializer& ObjectInitializer)
 	bTickingTask = false;
 }
 
-UGraspScanTask* UGraspScanTask::GraspScan(UGameplayAbility* OwningAbility, float ErrorWaitDelay)
+UGraspScanTask* UGraspScanTask::GraspScan(UGameplayAbility* OwningAbility, float ErrorWaitDelay, float FailsafeDelay)
 {
 #if !UE_BUILD_SHIPPING
 	// Ability should always have authority; clients never need to give abilities, which this task is for
@@ -77,6 +77,7 @@ UGraspScanTask* UGraspScanTask::GraspScan(UGameplayAbility* OwningAbility, float
 	
 	UGraspScanTask* MyObj = NewAbilityTask<UGraspScanTask>(OwningAbility);
 	MyObj->Delay = ErrorWaitDelay;
+	MyObj->FailsafeDelay = FailsafeDelay;
 	return MyObj;
 }
 
@@ -458,6 +459,19 @@ void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FG
 		// Request the next Grasp
 		RequestGrasp();
 	}
+
+	// Fail-safe timer to ensure we don't hang indefinitely -- this occurs due to an engine bug where the TargetingSubsystem
+	// loses all of its requests when another player joins (so far confirmed for running under one process in PIE only)
+	auto OnFailsafeTimer = [this]
+	{
+		if (GC->TargetingRequests.Num() > 0)
+		{
+			UE_LOG(LogGrasp, Error, TEXT("%s GraspScanTask hung with %d targeting requests. Retrying..."), *GetRoleString(), GC->TargetingRequests.Num());
+			GC->EndAllTargetingRequests();
+			RequestGrasp();
+		}
+	};
+	GetWorld()->GetTimerManager().SetTimer(FailsafeTimer, OnFailsafeTimer, FailsafeDelay, false);
 }
 
 void UGraspScanTask::OnPauseGrasp(bool bPaused)

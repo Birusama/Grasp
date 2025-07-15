@@ -20,7 +20,11 @@ class GRASP_API UGraspScanTask : public UAbilityTask
 	GENERATED_BODY()
 
 public:
+	UPROPERTY()
 	FTimerHandle GraspWaitTimer;
+
+	UPROPERTY()
+	FTimerHandle FailsafeTimer;
 
 protected:
 	UPROPERTY()
@@ -36,9 +40,10 @@ public:
 	 * Grasp's passive perpetual task that scans for interact targets to grant an ability to, prior to interaction
 	 * @param OwningAbility The ability that owns this task
 	 * @param ErrorWaitDelay Delay before we attempt any requests after encountering an error
+	 * @param FailsafeDelay Delay before we request a new target if we don't get one
 	 */
 	UFUNCTION(BlueprintCallable, Category="Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "TRUE", DisplayName="Grasp Scan"))
-	static UGraspScanTask* GraspScan(UGameplayAbility* OwningAbility, float ErrorWaitDelay = 0.5f);
+	static UGraspScanTask* GraspScan(UGameplayAbility* OwningAbility, float ErrorWaitDelay = 0.5f, float FailsafeDelay = 1.f);
 
 	virtual void Activate() override;
 
@@ -69,6 +74,9 @@ public:
 protected:
 	UPROPERTY()
 	float Delay = 0.5f;
+
+	UPROPERTY()
+	float FailsafeDelay = 1.f;
 	
 	ENetMode GetOwnerNetMode() const;
 	FString GetRoleString() const;
