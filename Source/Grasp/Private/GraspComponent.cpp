@@ -109,7 +109,7 @@ void UGraspComponent::InitializeGrasp(UAbilitySystemComponent* InAbilitySystemCo
 			// Get the targeting presets
 			if (ScanAbilityHandle.IsValid())
 			{
-				CurrentTargetingPresets = GetTargetingPresets();
+				CurrentTargetingPresets = ObjectPtrWrap(GetTargetingPresets());
 			}
 
 			// Bind the pawn changed event if required
@@ -140,7 +140,7 @@ AActor* UGraspComponent::GetTargetingSource_Implementation() const
 
 TMap<FGameplayTag, UTargetingPreset*> UGraspComponent::GetTargetingPresets_Implementation() const
 {
-	return DefaultTargetingPresets;
+	return ObjectPtrDecay(DefaultTargetingPresets);
 }
 
 const FGraspAbilityData* UGraspComponent::GetGraspAbilityData(const TSubclassOf<UGameplayAbility>& Ability) const
@@ -193,8 +193,8 @@ void UGraspComponent::UpdateTargetingPresets()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GraspComponent::UpdateTargetingPresets);
 	
-	const TMap<FGameplayTag, UTargetingPreset*> LastTargetingPresets = CurrentTargetingPresets;
-	CurrentTargetingPresets = GetTargetingPresets();
+	const TMap<FGameplayTag, UTargetingPreset*> LastTargetingPresets = ObjectPtrDecay(CurrentTargetingPresets);
+	CurrentTargetingPresets = ObjectPtrWrap(GetTargetingPresets());
 
 	// Clear out any tags that are no longer valid
 	for (const auto& Preset : LastTargetingPresets)

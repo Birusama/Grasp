@@ -65,6 +65,9 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.2.1
+* Replace native ptr with TObjectPtr
+
 ### 1.2.0
 * Due to Engine bug where Targeting Subsystem loses all requests when another client joins, a failsafe has been added
 * Debug logging now identifies which client is logging

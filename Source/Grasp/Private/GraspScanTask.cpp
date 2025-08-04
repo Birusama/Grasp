@@ -292,7 +292,7 @@ void UGraspScanTask::RequestGrasp()
 	}
 
 	// Get cached targeting presets
-	const TMap<FGameplayTag, UTargetingPreset*>& TargetingPresets = GC->CurrentTargetingPresets;
+	const TMap<FGameplayTag, TObjectPtr<UTargetingPreset>>& TargetingPresets = GC->CurrentTargetingPresets;
 
 	if (FGraspCVars::bLogVeryVerboseScanRequest)
 	{

@@ -41,7 +41,7 @@ public:
 
 	/** Targeting presets for finding graspables to interact with, used unless overriding GetTargetingPresets() */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Grasp)
-	TMap<FGameplayTag, UTargetingPreset*> DefaultTargetingPresets = { { FGraspTags::Grasp_Interact, nullptr } };
+	TMap<FGameplayTag, TObjectPtr<UTargetingPreset>> DefaultTargetingPresets = { { FGraspTags::Grasp_Interact, nullptr } };
 
 	/**
 	 * Determines which actor to use as the source for the targeting request
@@ -73,7 +73,7 @@ public:
 
 	/** Current targeting presets that will be used to perform targeting requests */
 	UPROPERTY(Transient, DuplicateTransient)
-	TMap<FGameplayTag, UTargetingPreset*> CurrentTargetingPresets;
+	TMap<FGameplayTag, TObjectPtr<UTargetingPreset>> CurrentTargetingPresets;
 
 	/** Existing targeting request handles that are in-progress */
 	UPROPERTY(Transient)
