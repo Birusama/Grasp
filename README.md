@@ -65,6 +65,9 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.2.2
+* Fix `UGraspScanTask::GetOwnerNetMode()` checks
+
 ### 1.2.1
 * Replace native ptr with TObjectPtr
 
