@@ -464,14 +464,17 @@ void UGraspScanTask::OnGraspComplete(FTargetingRequestHandle TargetingHandle, FG
 	// loses all of its requests when another player joins (so far confirmed for running under one process in PIE only)
 	auto OnFailsafeTimer = [this]
 	{
-		if (GC->TargetingRequests.Num() > 0)
+		if (GC.IsValid() && GC->TargetingRequests.Num() > 0)
 		{
 			UE_LOG(LogGrasp, Error, TEXT("%s GraspScanTask hung with %d targeting requests. Retrying..."), *GetRoleString(), GC->TargetingRequests.Num());
 			GC->EndAllTargetingRequests();
 			RequestGrasp();
 		}
 	};
-	GetWorld()->GetTimerManager().SetTimer(FailsafeTimer, OnFailsafeTimer, FailsafeDelay, false);
+
+	// Weak Lambda is used because OnDestroy isn't called at the correct point in the engine lifecycle after UEngine::Browse (open map)
+	GetWorld()->GetTimerManager().SetTimer(FailsafeTimer, FTimerDelegate::CreateWeakLambda(this, OnFailsafeTimer),
+		FailsafeDelay, false);
 }
 
 void UGraspScanTask::OnPauseGrasp(bool bPaused)

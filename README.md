@@ -65,6 +65,9 @@ Build your interaction abilities rapidly with useful functions to save you time.
 
 ## Changelog
 
+### 1.2.3
+* Change Failsafe Timer to Weak Lambda because OnDestroy not being called at correct point in lifecycle after UEngine::Browse (`open map`)
+
 ### 1.2.2
 * Fix `UGraspScanTask::GetOwnerNetMode()` checks
 
